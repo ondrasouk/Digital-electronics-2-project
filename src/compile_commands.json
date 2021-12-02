@@ -1,0 +1,74 @@
+[
+  {
+    "arguments": [
+      "/opt/avr8-gnu-toolchain-linux_x86_64/bin/avr-gcc",
+      "-fdiagnostics-color=always",
+      "-fgnuc-version=5.4",
+      "-c",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-Os",
+      "-mmcu=atmega328p",
+      "-DF_CPU=16000000UL",
+      "-I.",
+      "-I../library/include",
+      "-o",
+      "lcd.o",
+      "lcd.c"
+    ],
+    "directory": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src",
+    "file": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/lcd.c",
+    "output": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/lcd.o"
+  },
+  {
+    "arguments": [
+      "/opt/avr8-gnu-toolchain-linux_x86_64/bin/avr-gcc",
+      "-fdiagnostics-color=always",
+      "-fgnuc-version=5.4",
+      "-c",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-Os",
+      "-mmcu=atmega328p",
+      "-DF_CPU=16000000UL",
+      "-I.",
+      "-I../library/include",
+      "-o",
+      "main.o",
+      "main.c"
+    ],
+    "directory": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src",
+    "file": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/main.c",
+    "output": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/main.o"
+  },
+  {
+    "arguments": [
+      "/opt/avr8-gnu-toolchain-linux_x86_64/bin/avr-gcc",
+      "-fdiagnostics-color=always",
+      "-fgnuc-version=5.4",
+      "-c",
+      "-std=c99",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-g",
+      "-Os",
+      "-mmcu=atmega328p",
+      "-DF_CPU=16000000UL",
+      "-I.",
+      "-I../library/include",
+      "-o",
+      "uart.o",
+      "uart.c"
+    ],
+    "directory": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src",
+    "file": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/uart.c",
+    "output": "/home/ondra/Sync/BPC-EKT3Z/BPC-DE2/Digital-electronics-2-project/src/uart.o"
+  }
+]
