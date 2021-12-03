@@ -13,28 +13,108 @@
 /* Includes ----------------------------------------------------------*/
 #include <avr/io.h>         // AVR device-specific IO definitions
 #include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
+#include <util/atomic.h>    // Atomic operations
 #include "timer.h"          // Timer library for AVR-GCC
 #include "lcd.h"            // Peter Fleury's LCD library
 #include <stdlib.h>         // C library. Needed for conversion function
+#include <util/delay.h>
 #include "uart.h"           // Peter Fleury's UART library
+#include "lcd_buttons.h"    // Library with reading buttons
+
+/* Globals -----------------------------------------------------------*/
+// Custom character definition using https://omerk.github.io/lcdchargen/
+const uint8_t customChar[] = {
+    0b00111, 0b01110, 0b11100, 0b11000, 0b11100, 0b01110, 0b00111,
+    0b00011, // 0
+    0b10000, 0b11000, 0b11100, 0b11110, 0b11110, 0b11100, 0b11000,
+    0b10000, // 1
+    0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000,
+    0b10000, // 2
+    0b11000, 0b11000, 0b11000, 0b11000, 0b11000, 0b11000, 0b11000,
+    0b11000, // 3
+    0b11100, 0b11100, 0b11100, 0b11100, 0b11100, 0b11100, 0b11100,
+    0b11100, // 4
+    0b11110, 0b11110, 0b11110, 0b11110, 0b11110, 0b11110, 0b11110,
+    0b11110, // 5
+    0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111,
+    0b11111, // 6
+};
+#define char_array_size sizeof(menu_entries)/2
+const char *menu_entries[] = {
+    "Menu 1", 
+    "Menu 2", 
+    "Menu 3",
+    "Menu 4",
+    "Menu 5",
+    "Menu 6",
+};
+uint16_t ADC_key_value = 65535;
+uint8_t menu_pos = 0;
+uint8_t scroll_pos = 0;
 
 /* Function definitions ----------------------------------------------*/
+
+void menu(uint8_t key_press)
+{
+    if(key_press == 3){
+        scroll_pos++;
+        if((menu_pos < char_array_size-2) & (scroll_pos == 2)){
+            menu_pos++;
+            scroll_pos--;
+        }
+        else if(scroll_pos == 2){
+            scroll_pos--;
+        }
+    }
+    if(key_press == 4){
+        scroll_pos--;
+        if((menu_pos > 0) & (scroll_pos == 255)){
+            menu_pos--;
+            scroll_pos++;
+        } 
+        else if (scroll_pos == 255){
+            scroll_pos++;
+        }
+    }
+    lcd_clrscr();
+    lcd_gotoxy(1,0);
+    lcd_gotoxy(1,0);    // Fix some unkonwn problem
+    lcd_puts(menu_entries[menu_pos]);
+    lcd_gotoxy(1,1);
+    lcd_puts(menu_entries[menu_pos+1]);
+    lcd_gotoxy(0,scroll_pos);
+    lcd_putc(1);
+}
+
+
 /**********************************************************************
  * Function: Main function where the program execution begins
- * Purpose:  Use Timer/Counter1 and start ADC conversion four times 
- *           per second. Send value to LCD and UART.
+ * Purpose:  TODO
  * Returns:  none
  **********************************************************************/
 int main(void)
 {
     // Initialize LCD display
     lcd_init(LCD_DISP_ON);
-    lcd_gotoxy(1, 0); lcd_puts("value:");
-    lcd_gotoxy(3, 1); lcd_puts("key:");
-    lcd_gotoxy(8, 0); lcd_puts("a");    // Put ADC value in decimal
-    lcd_gotoxy(13,0); lcd_puts("b");    // Put ADC value in hexadecimal
-    lcd_gotoxy(8, 1); lcd_puts("c");    // Put button name here
-
+    // Upload custom characters
+    lcd_command(1 << LCD_CGRAM);
+    for (uint8_t i = 0; i < sizeof(customChar); i++)
+    {
+        lcd_data(customChar[i]);
+    }
+    lcd_command(1 << LCD_DDRAM);
+    // Print debug info about the menu
+    lcd_gotoxy(0, 0);
+    char str[16] = "                ";
+    itoa(char_array_size, str, 10);
+    lcd_puts(str);
+    // Print the custom characters on display
+    lcd_gotoxy(0, 1);
+    for (uint8_t i = 0; i < sizeof(customChar)/8; i++)
+    {
+        lcd_putc(i);
+    }    
+    _delay_ms(1000);
     // Configure ADC to convert PC0[A0] analog value
     // Set ADC reference to AVcc
     ADMUX |= (1 << REFS0);
@@ -46,20 +126,28 @@ int main(void)
     ADCSRA |= (1 << ADIE);
     // Set clock prescaler to 128
     ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-    // Configure 16-bit Timer/Counter1 to start ADC conversion
-    // Set prescaler to 262 ms and enable overflow interrupt
-    TIM1_overflow_262ms();
-    TIM1_overflow_interrupt_enable();
+    // Configure 16-bit Timer/Counter2 to start ADC conversion
+    // Set prescaler to 16 ms and enable overflow interrupt
+    TIM2_overflow_16ms();
+    TIM2_overflow_interrupt_enable();
     // Initialize UART to asynchronous, 8N1, 9600
     uart_init(UART_BAUD_SELECT(9600, F_CPU));
     // Enables interrupts by setting the global interrupt mask
     sei();
-
+    
+    uint8_t key_press = 0;
+    menu(0);
     // Infinite loop
-    while (1)
-    {
-        /* Empty loop. All subsequent operations are performed exclusively 
-         * inside interrupt service routines ISRs */
+    while (1) {
+        key_press = key_press_detect(&ADC_key_value);
+        if (key_press) {
+            char str[1] = "0";
+            itoa(key_press, str, 10);
+            uart_puts("\n\rKey pressed: ");
+            uart_puts(str);
+            menu(key_press);
+        }
+        
     }
 
     // Will never reach this
@@ -68,11 +156,10 @@ int main(void)
 
 /* Interrupt service routines ----------------------------------------*/
 /**********************************************************************
- * Function: Timer/Counter1 overflow interrupt
- * Purpose:  Use single conversion mode and start conversion four times
- *           per second.
+ * Function: Timer/Counter2 overflow interrupt
+ * Purpose:  Use single conversion mode and start.
  **********************************************************************/
-ISR(TIMER1_OVF_vect)
+ISR(TIMER2_OVF_vect)
 {
     // Start ADC conversion
     ADCSRA |= (1 << ADSC);
@@ -80,56 +167,8 @@ ISR(TIMER1_OVF_vect)
 
 /**********************************************************************
  * Function: ADC complete interrupt
- * Purpose:  Display value on LCD and send it to UART.
+ * Purpose:  Copy ADC value.
  **********************************************************************/
-ISR(ADC_vect)
-{
-    uint16_t value = 0;
-    char lcd_string[4] = "0000";
-
-    value = ADC;                  // Copy ADC result to 16-bit variable
-    itoa(value, lcd_string, 10);  // Convert decimal value to string
-    lcd_gotoxy(8, 0);
-    lcd_puts("    ");
-    lcd_gotoxy(8, 0);
-    lcd_puts(lcd_string);
-    uart_puts("\n\rADC Value: ");
-    uart_puts(lcd_string);
-    itoa(value, lcd_string, 16);  // Convert hexadecimal value to string
-    lcd_gotoxy(13, 0);
-    lcd_puts("    ");
-    lcd_gotoxy(13, 0);
-    lcd_puts(lcd_string);
-    //uart_puts("\n\rADC Value (hex): "); uart_puts(lcd_string); 
-    // probably the interrupt routine takes too long and the MCU stops - Workaround: comment some code in routine
-    if((value <= 1024) && (value > 950)){
-        lcd_gotoxy(8, 1);
-        lcd_puts("none  ");
-        uart_puts("\n\rKey: none");
-    }
-    else if((value <= 950) && (value > 650)){
-        lcd_gotoxy(8, 1);
-        lcd_puts("SELECT");
-        uart_puts("\n\rKey: SELECT");
-    }
-    else if((value <= 650) && (value > 440)){
-        lcd_gotoxy(8, 1);
-        lcd_puts("LEFT  ");
-        uart_puts("\n\rKey: LEFT");
-    }
-    else if((value <= 440) && (value > 180)){
-        lcd_gotoxy(8, 1);
-        lcd_puts("DOWN  ");
-        uart_puts("\n\rKey: DOWN");
-    }
-    else if((value <= 180) && (value > 60)){
-        lcd_gotoxy(8, 1);
-        lcd_puts("UP    ");
-        uart_puts("\n\rKey: UP");
-    }
-    else if(value <= 60){
-        lcd_gotoxy(8, 1);
-        lcd_puts("RIGTH ");
-        uart_puts("\n\rKey: RIGTH");
-    }
+ISR(ADC_vect) {
+    ADC_key_value = ADC;  
 }
