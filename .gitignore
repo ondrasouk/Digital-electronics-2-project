@@ -54,3 +54,4 @@ dkms.conf
 # Additional files and directories
 .cache/
 *.lss
+*.kate-swp
