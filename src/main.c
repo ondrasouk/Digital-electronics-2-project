@@ -50,15 +50,95 @@ const uint8_t customChar[] = {
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
+#define CURSOR_POS (menu_pos + scroll_pos)
 
-//static uint8_t MENU_TEXT_SIZE = MENU_TEXT_SIZE_D;
+// static uint8_t MENU_TEXT_SIZE = MENU_TEXT_SIZE_D;
 
-const char *menu_entries[] = {
+typedef struct {
+    const uint8_t type; // 1 - plain; 2 - with "%"
+    const uint8_t limit_min;
+    const uint8_t step;
+    const uint8_t limit_max;
+    uint8_t *value;
+} item_uint8;
+
+const char *smart_menu[] = {
     "Irrigation mode:",
     "Days away:",
     "Irrigation level:",
-    "TEST"
+    "Save water from water level:",
 };
+
+uint8_t days_away = 3;
+uint8_t irrigation_level = 50;
+uint8_t save_water_level = 20;
+
+const item_uint8 smart_menu_items[] = {
+    {1, 1, 1, 14, &days_away},
+    {2, 0, 10, 100, &irrigation_level},
+    {2, 0, 20, 100, &save_water_level},
+};
+
+const char *drip_menu[] = {
+    "Irrigation mode:",
+    "Max irrigation level:",
+    "Min irritation level:",
+    "Irritation (mins):",
+};
+
+uint8_t irrigation_max = 80;
+uint8_t irrigation_min = 30;
+uint8_t irrigation_duration_min = 20;
+
+const item_uint8 drip_menu_items[] = {
+    {1, 10, 10, 100, &irrigation_max},
+    {2, 0, 10, 100, &irrigation_min},
+    {2, 0, 1, 255, &irrigation_duration_min},
+};
+
+const char *const_menu[] = {
+    "Irrigation mode:",
+    "Irritation level:",
+    "Hysterezis:",
+    "Irritation (mins):",
+    "Wait (min):",
+};
+
+uint8_t irrigation_hysterezis = 20;
+uint8_t irrigation_wait_min = 60;
+
+const item_uint8 const_menu_items[] = {
+    {1, 1, 1, 14, &irrigation_level},
+    {2, 10, 10, 100, &irrigation_hysterezis},
+    {2, 0, 1, 255, &irrigation_duration_min},
+    {2, 0, 1, 255, &irrigation_wait_min},
+};
+
+const char *menu_head_items[] = {
+    "smart",
+    " drip",
+    "const",
+};
+
+const char **mode_menu_pointers[] = {
+    smart_menu,
+    drip_menu,
+    const_menu,
+}; // Add all menus to display
+
+const item_uint8 *mode_menu_items[] = {
+    smart_menu_items,
+    drip_menu_items,
+    const_menu_items,
+};
+
+const uint8_t mode_menu_lenght[] = {
+    ARRAY_SIZE(smart_menu),
+    ARRAY_SIZE(drip_menu),
+    ARRAY_SIZE(const_menu),
+};
+
+
 
 uint16_t ADC_key_value = 65535;
 uint8_t menu_pos = 0;
@@ -66,10 +146,14 @@ uint8_t scroll_pos = 0;
 
 uint8_t slice_start = 0;
 const char *shift_string;
-char shift_buffer[MENU_TEXT_SIZE_D + 1] = "         \x01"; // last character is left arrow + end of string
+char shift_buffer[MENU_TEXT_SIZE_D + 1] = "         \x7e"; // last character is left arrow + end of string
 uint8_t scroll_pos_shift = 255;
 
+char value_disp[6] = "     ";
+
 uint8_t TIM2_flag = 0;
+
+uint8_t irrigation_mode = 0;
 
 /* Function definitions ----------------------------------------------*/
 
@@ -103,29 +187,8 @@ void TIM2_routine()
     }
 }
 
-
-void menu(uint8_t key_press)
+void menu_print(const char *menu_entries[])
 {
-    if(key_press == 3){
-        scroll_pos++;
-        if((menu_pos < ARRAY_SIZE(menu_entries)-2) & (scroll_pos == 2)){
-            menu_pos++;
-            scroll_pos--;
-        }
-        else if(scroll_pos == 2){
-            scroll_pos--;
-        }
-    }
-    if(key_press == 4){
-        scroll_pos--;
-        if((menu_pos > 0) & (scroll_pos == 255)){
-            menu_pos--;
-            scroll_pos++;
-        } 
-        else if (scroll_pos == 255){
-            scroll_pos++;
-        }
-    }
     lcd_clrscr();
     lcd_gotoxy(1,0);
     lcd_gotoxy(1, 0); // Fix some unknown problem
@@ -156,7 +219,86 @@ void menu(uint8_t key_press)
         lcd_puts(menu_entries[menu_pos+1]);
     }
     lcd_gotoxy(0,scroll_pos);
-    lcd_putc(0);
+    lcd_putc(0); //Print cursor >
+    if(menu_pos == 0){
+        lcd_gotoxy(11, 0);
+        lcd_puts(menu_head_items[irrigation_mode]);
+        lcd_gotoxy(11, 1);
+        itoa(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, 10);
+        lcd_puts(value_disp);
+    }
+    else{
+        lcd_gotoxy(11, 0);
+        itoa(*mode_menu_items[irrigation_mode][menu_pos-1].value, value_disp, 10);
+        lcd_puts(value_disp);
+        lcd_gotoxy(11, 1);
+        itoa(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, 10);
+        lcd_puts(value_disp);
+    }
+    
+}
+
+void menu(uint8_t key_press)
+{
+    if(key_press == 3){
+        scroll_pos++;
+        if((menu_pos < mode_menu_lenght[irrigation_mode]-2) & (scroll_pos == 2)){
+            menu_pos++;
+            scroll_pos--;
+        }
+        else if(scroll_pos == 2){
+            scroll_pos--;
+        }
+    }
+    if(key_press == 4){
+        scroll_pos--;
+        if((menu_pos > 0) & (scroll_pos == 255)){
+            menu_pos--;
+            scroll_pos++;
+        } 
+        else if (scroll_pos == 255){
+            scroll_pos++;
+        }
+    }
+    item_uint8 menu_item = mode_menu_items[irrigation_mode][CURSOR_POS - 1];
+    uint8_t item_value;
+    if(key_press == 5){
+        if(CURSOR_POS == 0){
+            irrigation_mode++;
+            if(irrigation_mode > ARRAY_SIZE(mode_menu_lenght) - 1){
+                irrigation_mode = 0;
+            }
+        }
+        else{
+            item_value = *menu_item.value;
+            *menu_item.value += menu_item.step;
+            if((*menu_item.value > menu_item.limit_max)|((*menu_item.value - item_value) != menu_item.step)){
+                *menu_item.value = menu_item.limit_max;
+            }
+        }
+    }
+    if(key_press == 2){
+        if(CURSOR_POS == 0){
+            irrigation_mode--;
+            if(irrigation_mode == 255){
+                irrigation_mode = ARRAY_SIZE(mode_menu_lenght) - 1;
+            }
+        }
+        else{
+            item_value = *menu_item.value;
+            *menu_item.value -= menu_item.step;
+            if((*menu_item.value < menu_item.limit_min)|((item_value - *menu_item.value) != menu_item.step)){
+                *menu_item.value = menu_item.limit_min;
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    menu_print(mode_menu_pointers[irrigation_mode]);
+    shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
 }
 
 
@@ -179,8 +321,10 @@ int main(void)
     // Print debug info about the menu
     lcd_gotoxy(0, 0);
     char str[16] = "                ";
-    itoa(MENU_TEXT_SHIFT_NUM, str, 10);
+    itoa(mode_menu_lenght[1], str, 10);
     lcd_puts(str);
+    lcd_puts(" ");
+    lcd_puts(mode_menu_pointers[0][1]);
     // Print the custom characters on display
     lcd_gotoxy(0, 1);
     for (uint8_t i = 0; i < sizeof(customChar)/8; i++)
