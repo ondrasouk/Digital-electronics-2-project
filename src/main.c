@@ -25,7 +25,8 @@
 
 #define DISPLAY_ROWS 2
 #define MENU_TEXT_SIZE_D 10
-#define MENU_TEXT_SHIFT_TIME_USEC 250000
+#define MENU_TEXT_SHIFT_TIME_USEC 150000
+#define MENU_ITEM_SIZE_D 5
 #define TIM2_OVERFLOW_TIME 4096
 /* Globals -----------------------------------------------------------*/
 // Custom character definition using https://omerk.github.io/lcdchargen/

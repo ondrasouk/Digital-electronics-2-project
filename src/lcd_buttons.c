@@ -45,19 +45,19 @@ uint8_t key_press_detect(uint16_t *ADC_key_value){
         return 0;
     } 
     else if ((value <= 950) && (value > 650)) {
-        return key_press_detect_deb(1, ADC_key_value);
+        return key_press_detect_deb(1, ADC_key_value); //SELECT
     }
     else if((value <= 650) && (value > 440)){
-        return key_press_detect_deb(2, ADC_key_value);
+        return key_press_detect_deb(2, ADC_key_value); //LEFT
     }
     else if((value <= 440) && (value > 180)){
-        return key_press_detect_deb(3, ADC_key_value);
+        return key_press_detect_deb(3, ADC_key_value); //UP
     }
     else if((value <= 180) && (value > 60)){
-        return key_press_detect_deb(4, ADC_key_value);
+        return key_press_detect_deb(4, ADC_key_value); //DOWN
     }
     else if(value <= 60){
-        return key_press_detect_deb(5, ADC_key_value);
+        return key_press_detect_deb(5, ADC_key_value); //RIGHT
     }
     return 0;
 }
