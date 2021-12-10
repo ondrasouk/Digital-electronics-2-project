@@ -55,7 +55,7 @@ const uint8_t customChar[] = {
 // static uint8_t MENU_TEXT_SIZE = MENU_TEXT_SIZE_D;
 
 typedef struct {
-    const uint8_t type; // 1 - plain; 2 - with "%"
+    const uint8_t type; // 1 - plain; 2 - with "%"; 3 - with "m"
     const uint8_t limit_min;
     const uint8_t step;
     const uint8_t limit_max;
@@ -91,9 +91,9 @@ uint8_t irrigation_min = 30;
 uint8_t irrigation_duration_min = 20;
 
 const item_uint8 drip_menu_items[] = {
-    {1, 10, 10, 100, &irrigation_max},
+    {2, 10, 10, 100, &irrigation_max},
     {2, 0, 10, 100, &irrigation_min},
-    {2, 0, 1, 255, &irrigation_duration_min},
+    {3, 0, 1, 255, &irrigation_duration_min},
 };
 
 const char *const_menu[] = {
@@ -105,13 +105,13 @@ const char *const_menu[] = {
 };
 
 uint8_t irrigation_hysterezis = 20;
-uint8_t irrigation_wait_min = 60;
+uint8_t irrigation_wait_min = 100;
 
 const item_uint8 const_menu_items[] = {
-    {1, 1, 1, 14, &irrigation_level},
+    {2, 1, 1, 14, &irrigation_level},
     {2, 10, 10, 100, &irrigation_hysterezis},
-    {2, 0, 1, 255, &irrigation_duration_min},
-    {2, 0, 1, 255, &irrigation_wait_min},
+    {3, 0, 1, 255, &irrigation_duration_min},
+    {3, 0, 1, 255, &irrigation_wait_min},
 };
 
 const char *menu_head_items[] = {
@@ -138,7 +138,7 @@ const uint8_t mode_menu_lenght[] = {
     ARRAY_SIZE(const_menu),
 };
 
-
+const char type_suffix[4] = "  %m";
 
 uint16_t ADC_key_value = 65535;
 uint8_t menu_pos = 0;
@@ -149,7 +149,7 @@ const char *shift_string;
 char shift_buffer[MENU_TEXT_SIZE_D + 1] = "         \x7e"; // last character is left arrow + end of string
 uint8_t scroll_pos_shift = 255;
 
-char value_disp[6] = "     ";
+char value_disp[MENU_ITEM_SIZE_D + 1] = "     ";
 
 uint8_t TIM2_flag = 0;
 
@@ -162,6 +162,26 @@ void slice_str(const char *str, char *buffer, uint8_t start)
     strncpy(buffer, str + start, MENU_TEXT_SIZE_D - 1);
 }
 
+void itoa_menu_item(int value, char *str, uint8_t type)
+{
+    strcpy(str, "     "); // Clear output buffer
+    if(value < 10){
+        itoa(value, str + MENU_ITEM_SIZE_D - 2, 10);
+    }
+    else if(value < 100){
+        itoa(value, str + MENU_ITEM_SIZE_D - 3, 10);
+    }
+    else if(value < 1000){
+        itoa(value, str + MENU_ITEM_SIZE_D - 4, 10);
+    }
+    else if(value < 10000){
+        itoa(value, str + MENU_ITEM_SIZE_D - 5, 10);
+    }
+    else{
+        itoa(value, str, 10);
+    }
+    str[4] = type_suffix[type];
+}
 
 void TIM2_routine() 
 {
@@ -224,15 +244,15 @@ void menu_print(const char *menu_entries[])
         lcd_gotoxy(11, 0);
         lcd_puts(menu_head_items[irrigation_mode]);
         lcd_gotoxy(11, 1);
-        itoa(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, 10);
+        itoa_menu_item(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, mode_menu_items[irrigation_mode][menu_pos].type);
         lcd_puts(value_disp);
     }
     else{
         lcd_gotoxy(11, 0);
-        itoa(*mode_menu_items[irrigation_mode][menu_pos-1].value, value_disp, 10);
+        itoa_menu_item(*mode_menu_items[irrigation_mode][menu_pos-1].value, value_disp, mode_menu_items[irrigation_mode][menu_pos-1].type);
         lcd_puts(value_disp);
         lcd_gotoxy(11, 1);
-        itoa(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, 10);
+        itoa_menu_item(*mode_menu_items[irrigation_mode][menu_pos].value, value_disp, mode_menu_items[irrigation_mode][menu_pos].type);
         lcd_puts(value_disp);
     }
     
@@ -292,11 +312,6 @@ void menu(uint8_t key_press)
             }
         }
     }
-    
-    
-    
-    
-    
     menu_print(mode_menu_pointers[irrigation_mode]);
     shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
 }
