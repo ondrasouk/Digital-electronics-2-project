@@ -30,8 +30,8 @@
 /* Globals -----------------------------------------------------------*/
 // Custom character definition using https://omerk.github.io/lcdchargen/
 const uint8_t customChar[] = {
-    0b00111, 0b01110, 0b11100, 0b11000, 0b11100, 0b01110, 0b00111,
-    0b00011, // 0
+    0b11000, 0b11100, 0b10110, 0b10011, 0b10011, 0b10110, 0b11100,
+    0b11000, // 0
     0b10000, 0b11000, 0b11100, 0b11110, 0b11110, 0b11100, 0b11000,
     0b10000, // 1
     0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000,
@@ -56,6 +56,7 @@ const char *menu_entries[] = {
     "Irrigation mode:",
     "Days away:",
     "Irrigation level:",
+    "TEST"
 };
 
 uint16_t ADC_key_value = 65535;
@@ -64,7 +65,7 @@ uint8_t scroll_pos = 0;
 
 uint8_t slice_start = 0;
 const char *shift_string;
-char shift_buffer[MENU_TEXT_SIZE_D + 1] =    "          "; // last character is end of string
+char shift_buffer[MENU_TEXT_SIZE_D + 1] = "         \x01"; // last character is left arrow + end of string
 uint8_t scroll_pos_shift = 255;
 
 uint8_t TIM2_flag = 0;
@@ -73,7 +74,7 @@ uint8_t TIM2_flag = 0;
 
 void slice_str(const char *str, char *buffer, uint8_t start)
 {
-    strncpy(buffer, str + start, MENU_TEXT_SIZE_D);
+    strncpy(buffer, str + start, MENU_TEXT_SIZE_D - 1);
 }
 
 
@@ -82,12 +83,17 @@ void TIM2_routine()
     if(scroll_pos_shift != 255){
         if (TIM2_flag > MENU_TEXT_SHIFT_NUM) {
             TIM2_flag = 0;
-            if(slice_start > (strlen(shift_string) - MENU_TEXT_SIZE_D)){
+            if (slice_start > (strlen(shift_string) - MENU_TEXT_SIZE_D)){
                 slice_start = 0;
+                shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
+            }
+            else if(slice_start == (strlen(shift_string) - MENU_TEXT_SIZE_D)){
+                strncpy(shift_buffer, shift_string + slice_start, MENU_TEXT_SIZE_D);
             }
             slice_str(shift_string, shift_buffer, slice_start);
             lcd_gotoxy(1, scroll_pos_shift);
             lcd_puts(shift_buffer);
+            
             slice_start++;
         }
     }
@@ -149,7 +155,7 @@ void menu(uint8_t key_press)
         lcd_puts(menu_entries[menu_pos+1]);
     }
     lcd_gotoxy(0,scroll_pos);
-    lcd_putc(1);
+    lcd_putc(0);
 }
 
 
