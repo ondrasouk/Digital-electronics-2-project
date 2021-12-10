@@ -20,7 +20,13 @@
 #include <util/delay.h>
 #include "uart.h"           // Peter Fleury's UART library
 #include "lcd_buttons.h"    // Library with reading buttons
+#include <string.h>
 
+
+#define DISPLAY_ROWS 2
+#define MENU_TEXT_SIZE_D 10
+#define MENU_TEXT_SHIFT_TIME_USEC 250000
+#define TIM2_OVERFLOW_TIME 4096
 /* Globals -----------------------------------------------------------*/
 // Custom character definition using https://omerk.github.io/lcdchargen/
 const uint8_t customChar[] = {
@@ -39,26 +45,63 @@ const uint8_t customChar[] = {
     0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111,
     0b11111, // 6
 };
-#define char_array_size sizeof(menu_entries)/2
+#define MENU_TEXT_SHIFT_NUM MENU_TEXT_SHIFT_TIME_USEC / TIM2_OVERFLOW_TIME
+#if !defined(ARRAY_SIZE)
+    #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#endif
+
+//static uint8_t MENU_TEXT_SIZE = MENU_TEXT_SIZE_D;
+
 const char *menu_entries[] = {
-    "Menu 1", 
-    "Menu 2", 
-    "Menu 3",
-    "Menu 4",
-    "Menu 5",
-    "Menu 6",
+    "Irrigation mode:",
+    "Days away:",
+    "Irrigation level:",
 };
+
 uint16_t ADC_key_value = 65535;
 uint8_t menu_pos = 0;
 uint8_t scroll_pos = 0;
 
+uint8_t slice_start = 0;
+const char *shift_string;
+char shift_buffer[MENU_TEXT_SIZE_D + 1] =    "          "; // last character is end of string
+uint8_t scroll_pos_shift = 255;
+
+uint8_t TIM2_flag = 0;
+
 /* Function definitions ----------------------------------------------*/
+
+void slice_str(const char *str, char *buffer, uint8_t start)
+{
+    strncpy(buffer, str + start, MENU_TEXT_SIZE_D);
+}
+
+
+void TIM2_routine() 
+{
+    if(scroll_pos_shift != 255){
+        if (TIM2_flag > MENU_TEXT_SHIFT_NUM) {
+            TIM2_flag = 0;
+            if(slice_start > (strlen(shift_string) - MENU_TEXT_SIZE_D)){
+                slice_start = 0;
+            }
+            slice_str(shift_string, shift_buffer, slice_start);
+            lcd_gotoxy(1, scroll_pos_shift);
+            lcd_puts(shift_buffer);
+            slice_start++;
+        }
+    }
+    else{
+        TIM2_flag = 0;
+    }
+}
+
 
 void menu(uint8_t key_press)
 {
     if(key_press == 3){
         scroll_pos++;
-        if((menu_pos < char_array_size-2) & (scroll_pos == 2)){
+        if((menu_pos < ARRAY_SIZE(menu_entries)-2) & (scroll_pos == 2)){
             menu_pos++;
             scroll_pos--;
         }
@@ -78,10 +121,33 @@ void menu(uint8_t key_press)
     }
     lcd_clrscr();
     lcd_gotoxy(1,0);
-    lcd_gotoxy(1,0);    // Fix some unkonwn problem
-    lcd_puts(menu_entries[menu_pos]);
+    lcd_gotoxy(1, 0); // Fix some unknown problem
+    scroll_pos_shift = 255;
+    if(strlen(menu_entries[menu_pos]) > MENU_TEXT_SIZE_D){
+        slice_start = 0;
+        slice_str(menu_entries[menu_pos], shift_buffer, 0);
+        lcd_puts(shift_buffer);
+        if(scroll_pos == 0){
+            shift_string = menu_entries[menu_pos];
+            scroll_pos_shift = 0;
+        }
+    }
+    else{
+        lcd_puts(menu_entries[menu_pos]);
+    }
     lcd_gotoxy(1,1);
-    lcd_puts(menu_entries[menu_pos+1]);
+    if(strlen(menu_entries[menu_pos+1]) > MENU_TEXT_SIZE_D){
+        slice_start = 0;
+        slice_str(menu_entries[menu_pos+1], shift_buffer, 0);
+        lcd_puts(shift_buffer);
+        if(scroll_pos == 1){
+            shift_string = menu_entries[menu_pos+1];
+            scroll_pos_shift = 1;
+        }
+    }
+    else{
+        lcd_puts(menu_entries[menu_pos+1]);
+    }
     lcd_gotoxy(0,scroll_pos);
     lcd_putc(1);
 }
@@ -106,7 +172,7 @@ int main(void)
     // Print debug info about the menu
     lcd_gotoxy(0, 0);
     char str[16] = "                ";
-    itoa(char_array_size, str, 10);
+    itoa(MENU_TEXT_SHIFT_NUM, str, 10);
     lcd_puts(str);
     // Print the custom characters on display
     lcd_gotoxy(0, 1);
@@ -130,6 +196,8 @@ int main(void)
     // Set prescaler to 16 ms and enable overflow interrupt
     TIM2_overflow_16ms();
     TIM2_overflow_interrupt_enable();
+    
+    
     // Initialize UART to asynchronous, 8N1, 9600
     uart_init(UART_BAUD_SELECT(9600, F_CPU));
     // Enables interrupts by setting the global interrupt mask
@@ -139,6 +207,7 @@ int main(void)
     menu(0);
     // Infinite loop
     while (1) {
+        TIM2_routine();
         key_press = key_press_detect(&ADC_key_value);
         if (key_press) {
             char str[1] = "0";
@@ -162,6 +231,7 @@ int main(void)
 ISR(TIMER2_OVF_vect)
 {
     // Start ADC conversion
+    TIM2_flag++;
     ADCSRA |= (1 << ADSC);
 }
 
@@ -169,6 +239,7 @@ ISR(TIMER2_OVF_vect)
  * Function: ADC complete interrupt
  * Purpose:  Copy ADC value.
  **********************************************************************/
-ISR(ADC_vect) {
+ISR(ADC_vect) 
+{
     ADC_key_value = ADC;  
 }
