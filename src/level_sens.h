@@ -40,8 +40,6 @@
 // includes --------------------------------------------------------
 #include <avr/io.h>         // AVR device-specific IO definitions
 
-
-
 /**
  * @brief Function initialise GPIO for water-level sensors
  * all sensors are sat as INPUT with PULLUP resistor
@@ -49,11 +47,11 @@
  */
 void level_sens_init (void){
     //GPIO SFR set
-    *(sensor1_port+1) &= ~(1<<sensor1_gpio); // DDR set as input
-    *(sensor2_port+1) &= ~(1<<sensor2_gpio); 
-    *(sensor3_port+1) &= ~(1<<sensor3_gpio); 
-    *(sensor4_port+1) &= ~(1<<sensor4_gpio); 
-    *(sensor5_port+1) &= ~(1<<sensor5_gpio); 
+    *(sensor1_port-1) &= ~(1<<sensor1_gpio); // DDR set as input
+    *(sensor2_port-1) &= ~(1<<sensor2_gpio); 
+    *(sensor3_port-1) &= ~(1<<sensor3_gpio); 
+    *(sensor4_port-1) &= ~(1<<sensor4_gpio); 
+    *(sensor5_port-1) &= ~(1<<sensor5_gpio); 
 
     *sensor1_port |= (1<<sensor1_gpio); // set pullup resistor
     *sensor2_port |= (1<<sensor2_gpio); 
@@ -75,12 +73,13 @@ uint8_t read_level(void){
     uint8_t n=0; //level counter
 
     // mapping GPIO bits to one byte
+    // *(PORTx-2) is pointer to PINx SFR
     data |= (((sensor1_pin>>sensor1_gpio) & 0x01)<<0);
     data |= (((sensor2_pin>>sensor2_gpio) & 0x01)<<1);
     data |= (((sensor3_pin>>sensor3_gpio) & 0x01)<<2);
     data |= (((sensor4_pin>>sensor4_gpio) & 0x01)<<3);
     data |= (((sensor5_pin>>sensor5_gpio) & 0x01)<<4);
-    //invert data
+    // invert data
     data = data^sensors_data_mask;
     //count flooded sensors
     while(data & (1<<n)){ //test most right bit
@@ -99,7 +98,7 @@ uint8_t read_level(void){
  * 
  * @return uint8_t adecvate water-level (0 to 5) (empty - full)
  */
-uint8_t read_level(void){
+uint8_t force_read_level(void){
     uint8_t data = 0; //init input byte
     uint8_t n=0; //level counter
 
@@ -118,4 +117,12 @@ uint8_t read_level(void){
     }
     return n;
 }
+/* 
+void my_print2(uint8_t num){
+    char str[8] = "";
+    itoa(num, str, 2);
+    uart_puts("\n\r ");
+    uart_puts(str);
+}
+ */
 #endif
