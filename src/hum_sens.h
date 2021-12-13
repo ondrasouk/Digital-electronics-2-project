@@ -24,9 +24,9 @@
 #define hum_sensor_PORT PORTC
 #define hum_sensor_DDR DDRC
 /**
- * @brief Calibration values for soil humidity transversion
- * @param max_val for 100%
- * @param min_val for 0%
+ * @brief Calibration ADC values for soil humidity transversion
+ * @param max_val ADC equal value for 0%
+ * @param min_val ADC equal value for 100%
  * 
  */
 #define max_val 450
@@ -82,10 +82,10 @@ uint16_t read_adc(){
  */
 long to_percent(long val){
     //limiting extrem values
-    if(val >= max_val) return 100;
-    if(val <= min_val) return 0;
+    if(val >= max_val) return 0;
+    if(val <= min_val) return 100;
     //map from 0-100 percent
-    return (val - min_val) * (100) / (max_val - min_val);
+    return 100 - (val - min_val) * (100) / (max_val - min_val);
 }
 /**
  * @brief Function read value from ADC and recalculate to percent
