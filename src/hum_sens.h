@@ -1,23 +1,34 @@
+#ifndef HUM_SENS_H
+#define HUM_SENS_H
 /**
  * @file hum_sens.h
  * @author Pavel Vanek (xvanek39@vutbr.cz)
  * @brief Consist rutines to work with soil humidity sensor.
+ * Sensor is working as resistive voltage divider.
+ * During idle state current flowing thrue probe must be minimalised to prevent
+ * corosion due  electrolysis.
+ * 
+ * 
  * @version 0.1
  * @date 2021-12-12
  * 
  * @copyright Copyright (c) 2021
  * 
  */
-
 #include <avr/io.h>         // AVR device-specific IO definitions
 /**
- * @brief GPIO definitions
+ * @brief GPIO humidity sensor definitions definitions
  * 
  */
 #define hum_sensor PC5
 #define hum_sensor_PORT PORTC
 #define hum_sensor_DDR DDRC
-
+/**
+ * @brief Calibration values for soil humidity transversion
+ * @param max_val for 100%
+ * @param min_val for 0%
+ * 
+ */
 #define max_val 450
 #define min_val 30
 
@@ -28,16 +39,21 @@
  */
 void hum_init(){
     hum_sensor_DDR &= ~(1<<hum_sensor); //set as input
-    hum_sensor_PORT |= (1<<hum_sensor); //pullup on
+    hum_sensor_PORT &= ~(1<<hum_sensor); //pullup off
 }
 /**
- * @brief Function read raw analog data from hum_sensor pin
+ * @brief Function read raw analog data from hum_sensor pin.
+ * Function also automaticaly turns off pullup resistor to prevent corosion
+ * of probec due electrolysis.
  * 
- * @return uint16_t 0-1024
+ * @return uint16_t readed ADC value (0-1024)
  */
 uint16_t read_adc(){
+    //store actual used ADC setting
     uint8_t ADCSRA_backup = ADCSRA;
     uint8_t ADMUX_backup = ADMUX;
+    //pullup on (anti-corosion protection)
+    hum_sensor_PORT |= (1<<hum_sensor); 
     //reference from AREF pin; Multiplexor set for PC5
     ADMUX = (1<<REFS0)| hum_sensor;
     //enable ADC, prescaler 128, start conversion
@@ -51,8 +67,12 @@ uint16_t read_adc(){
     //restore original ADC setting
     ADMUX = ADMUX_backup;
     ADCSRA = ADCSRA_backup;
+    //pullup off (anti-corosion protection)
+    hum_sensor_PORT &= ~(1<<hum_sensor); 
+
     return adc_val;
 }
+
 /**
  * @brief function return coresponding humidity
  * due to min_val and max_val
@@ -77,18 +97,4 @@ uint8_t read_hum(){
     return to_percent(read_adc());
 
 }
-
-
-
-void lcd_print(uint16_t num, uint8_t x, uint8_t y, uint8_t base){
-  lcd_gotoxy(x,y);
-  char str[10] = "";
-  itoa(num, str, base);
-  lcd_puts(str);
-} 
-
-
-void lcd_print_str(char str[], uint8_t x, uint8_t y){
-  lcd_gotoxy(x,y);
-  lcd_puts(str);
-} 
+#endif
