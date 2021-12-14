@@ -160,10 +160,6 @@ const char **menu_character_values_pointers[] = {
     menu_head_items,
 };
 
-const uint8_t menu_character_values_lenght[] = {
-    ARRAY_SIZE(menu_head_items),
-};
-
 /* Global variables --------------------------------------------------*/
 
 uint16_t ADC_key_value = 65535;
