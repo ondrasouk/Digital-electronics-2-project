@@ -14,14 +14,15 @@
 #include <avr/io.h>         // AVR device-specific IO definitions
 #include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
 #include <util/atomic.h>    // Atomic operations
-#include "timer.h"          // Timer library for AVR-GCC
-#include "lcd.h"            // Peter Fleury's LCD library
 #include <stdlib.h>         // C library. Needed for conversion function
 #include <util/delay.h>
+#include <string.h>
+#include "timer.h"          // Timer library for AVR-GCC
+#include "lcd.h"            // Peter Fleury's LCD library
 #include "uart.h"           // Peter Fleury's UART library
 #include "lcd_buttons.h"    // Library with reading buttons
-#include <string.h>
-
+#include "hum_sens.h"
+#include "level_sens.h"
 
 /* Definitions -------------------------------------------------------*/
 #define DISPLAY_ROWS 2
@@ -29,12 +30,14 @@
 #define MENU_TEXT_SHIFT_TIME_USEC 150000
 #define MENU_ITEM_SIZE_D 5
 #define TIM2_OVERFLOW_TIME 4096
-#define MENU_TEXT_SHIFT_NUM MENU_TEXT_SHIFT_TIME_USEC / TIM2_OVERFLOW_TIME
+#define MENU_TIMEOUT_SECS 10
 
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
 #define CURSOR_POS (menu_pos + scroll_pos)
+#define MENU_TEXT_SHIFT_NUM MENU_TEXT_SHIFT_TIME_USEC / TIM2_OVERFLOW_TIME
+#define MENU_TIMEOUT_NUM MENU_TIMEOUT_SECS * 100000 / TIM2_OVERFLOW_TIME
 
 /*--------------------------------------------------------------------*/
 /* Globals -----------------------------------------------------------*/
@@ -160,12 +163,10 @@ const char **menu_character_values_pointers[] = {
     menu_head_items,
 };
 
-/* Global variables --------------------------------------------------*/
+/* Display variables --------------------------------------------------*/
 
-uint16_t ADC_key_value = 65535;
-
-uint8_t menu_pos = 0;
-uint8_t scroll_pos = 0;
+uint8_t menu_pos = 0;   // position of top item in menu (0 - x)
+uint8_t scroll_pos = 0; // line of cursor 0 or 1
 
 uint8_t slice_start = 0;
 const char *shift_string;
@@ -174,7 +175,16 @@ uint8_t scroll_pos_shift = 255;
 
 char value_disp[MENU_ITEM_SIZE_D + 1] = "     ";
 
+uint8_t display_update = 1; // 0 - no update in menu, 1 - update in menu, 2 - update in menu values, 3 - no update in status page, 4 - update in status page, 5 - update in status page values
+
+/* Global variables --------------------------------------------------*/
+
+uint8_t TIM1_flag = 0;
 uint8_t TIM2_flag = 0;
+uint16_t TIM2_display_timer = 0;
+uint16_t ADC_key_value = 65535;
+uint16_t sens_humidity = 100;
+uint8_t sens_water_level = 100;
 
 /*--------------------------------------------------------------------*/
 /* Function definitions ----------------------------------------------*/
@@ -223,7 +233,7 @@ void slice_str(const char *str, char *buffer, uint8_t start)
 
 void itoa_menu_item(int value, char *str, uint8_t type)
 {
-    strcpy(str, "     "); // Clear output buffer
+    strncpy(str, "     ", MENU_ITEM_SIZE_D); // Clear output buffer
     if(type < ARRAY_SIZE(type_suffix)){
         if(value < 10){
             itoa(value, str + MENU_ITEM_SIZE_D - 2, 10);
@@ -248,6 +258,25 @@ void itoa_menu_item(int value, char *str, uint8_t type)
         }
         else{
             str = "error";
+        }
+    }
+}
+
+void TIM1_routine() 
+{
+    if(TIM1_flag){
+        char str[] = "     ";
+        TIM1_flag = 0;
+        sens_humidity = read_hum();
+        sens_water_level = read_level();
+        uart_puts("\n\rSoil Humidity: ");
+        itoa_menu_item(sens_humidity, str, 2);
+        uart_puts(str);
+        uart_puts("\n\rWater level: ");
+        itoa_menu_item(sens_water_level, str, 2);
+        uart_puts(str);
+        if(display_update == 3){
+            display_update = 5;
         }
     }
 }
@@ -296,25 +325,28 @@ void menu_line_print(const char *menu_entries[], uint8_t line)
     lcd_puts(value_disp);
 }
 
-void menu(uint8_t key_press)
+void display_menu(uint8_t key_press)
 {
+    display_update = 0;
     if(key_press == 3){ // UP Key
         scroll_pos++;
-        if((menu_pos < mode_menu_lenght[irrigation_mode]-2) & (scroll_pos == 2)){
+        if((menu_pos < mode_menu_lenght[irrigation_mode]-2) & (scroll_pos == 2)){ // scroll up
             menu_pos++;
             scroll_pos--;
+            display_update = 1;
         }
-        else if(scroll_pos == 2){
+        else if(scroll_pos == 2){ // top of menu
             scroll_pos--;
         }
     }
     if(key_press == 4){ // DOWN Key
         scroll_pos--;
-        if((menu_pos > 0) & (scroll_pos == 255)){
+        if((menu_pos > 0) & (scroll_pos == 255)){ // scroll down
             menu_pos--;
             scroll_pos++;
+            display_update = 1;
         } 
-        else if (scroll_pos == 255){
+        else if (scroll_pos == 255){ // bottom of menu
             scroll_pos++;
         }
     }
@@ -326,6 +358,7 @@ void menu(uint8_t key_press)
         else{
             limited_inc(menu_item.value, menu_item.limit_max, menu_item.step);
         }
+        display_update = 2;
     }
     if(key_press == 2){  // LEFT Key
         if(menu_item.type >= ARRAY_SIZE(type_suffix)){
@@ -334,9 +367,10 @@ void menu(uint8_t key_press)
         else{
             limited_dec(menu_item.value, menu_item.limit_min, menu_item.step);
         }
+        display_update = 2;
     }
     lcd_clrscr();
-    lcd_gotoxy(1,0); // Fix some unknown problem
+    lcd_gotoxy(1, 0); // Fix some unknown problem
     scroll_pos_shift = 255;
     menu_line_print(mode_menu_pointers[irrigation_mode], 0);
     menu_line_print(mode_menu_pointers[irrigation_mode], 1);
@@ -345,6 +379,32 @@ void menu(uint8_t key_press)
     shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
 }
 
+void display_status() 
+{
+    if((display_update < 3)|(display_update == 4)){
+        char str[] = "Soil:           ";
+        lcd_clrscr();
+        lcd_gotoxy(0, 0); // Fix some unknown problem
+        lcd_gotoxy(0, 0);
+        itoa_menu_item(sens_humidity, str+6, 2);
+        lcd_puts(str);
+        strcpy(str, "Water:          ");
+        lcd_gotoxy(0, 1);
+        itoa_menu_item(sens_water_level, str+6, 2);
+        lcd_puts(str);
+        display_update = 3;
+    } 
+    else if (display_update == 5) {
+        lcd_gotoxy(6, 0);
+        itoa_menu_item(sens_humidity, value_disp, 2);
+        lcd_puts(value_disp);
+        lcd_gotoxy(6, 1);
+        itoa_menu_item(sens_water_level, value_disp, 2);
+        lcd_puts(value_disp);
+        display_update = 3;
+    }
+    
+}
 
 /**********************************************************************
  * Function: Main function where the program execution begins
@@ -387,30 +447,46 @@ int main(void)
     ADCSRA |= (1 << ADIE);
     // Set clock prescaler to 128
     ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-    // Configure 16-bit Timer/Counter2 to start ADC conversion
+    // Configure 8-bit Timer/Counter2 to start ADC conversion
     // Set prescaler to 16 ms and enable overflow interrupt
     TIM2_overflow_16ms();
     TIM2_overflow_interrupt_enable();
-    
+    // Configure 16-bit Timer/Counter1 to start sensors readout
+    // Set prescaler to 4 s and enable overflow interrupt
+    TIM1_overflow_1s();
+    TIM1_overflow_interrupt_enable();
     // Initialize UART to asynchronous, 8N1, 9600
     uart_init(UART_BAUD_SELECT(9600, F_CPU));
+    // Initialize sensors
+    hum_init();
+    level_sens_init();
     // Enables interrupts by setting the global interrupt mask
     sei();
     
     uint8_t key_press = 0;
-    menu(0);
+    display_menu(0);
     // Infinite loop
     while (1) {
         TIM2_routine();
+        TIM1_routine();
         key_press = key_press_detect(&ADC_key_value);
         if (key_press) {
+            TIM2_display_timer = 0;
             char str[1] = "0";
             itoa(key_press, str, 10);
             uart_puts("\n\rKey pressed: ");
             uart_puts(str);
-            menu(key_press);
+            display_menu(key_press);
+            TIM2_display_timer = 0;
         }
-        
+        if(TIM2_display_timer > MENU_TIMEOUT_NUM){
+            scroll_pos_shift = 255; //stop text shift
+            TIM2_display_timer = MENU_TIMEOUT_NUM;
+            if(display_update < 3){
+                display_update = 4;
+            }
+            display_status();
+        }
     }
 
     // Will never reach this
@@ -422,10 +498,20 @@ int main(void)
  * Function: Timer/Counter2 overflow interrupt
  * Purpose:  Use single conversion mode and start.
  **********************************************************************/
+ISR(TIMER1_OVF_vect)
+{
+    // Signal to main
+    TIM1_flag++;
+}
+/**********************************************************************
+ * Function: Timer/Counter2 overflow interrupt
+ * Purpose:  Use single conversion mode and start.
+ **********************************************************************/
 ISR(TIMER2_OVF_vect)
 {
     // Start ADC conversion
     TIM2_flag++;
+    TIM2_display_timer++;
     ADCSRA |= (1 << ADSC);
 }
 
