@@ -66,7 +66,7 @@ void level_sens_init (void){
  * Function also checks for degradation of sensor(in case of corosion). In case that sensors are not flooded
  * sequtialy, function returns value 255 as ERROR state.
  * For reading without checking error state use force_read_level();
- * @return uint8_t adecvate water-level (0 to 5) (empty - full) or 255 - ERROR state
+ * @return uint8_t actual water level in percent (0 to 100) (empty - full) or 255 - ERROR state
  */
 uint8_t read_level(void){
     uint8_t data = 0; //init input byte
@@ -88,7 +88,7 @@ uint8_t read_level(void){
     }
     //check for sequence
     if (!data){
-        return n; //return number of active sensors
+        return n*20; //return number of active sensors
     }else {
         return 255; //error
     }

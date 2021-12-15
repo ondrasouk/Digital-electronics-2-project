@@ -11,14 +11,16 @@
  * 
  * @version 0.1
  * @date 2021-12-12
- * 
+ *
  * @copyright Copyright (c) 2021
  * 
  */
-#include <avr/io.h>         // AVR device-specific IO definitions
+#include <avr/io.h> // AVR device-specific IO definitions
+#include <util/delay.h>
+#include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
 /**
  * @brief GPIO humidity sensor definitions definitions
- * 
+ *
  */
 #define hum_sensor PC5
 #define hum_sensor_PORT PORTC
@@ -27,7 +29,7 @@
  * @brief Calibration ADC values for soil humidity transversion
  * @param max_val ADC equal value for 0%
  * @param min_val ADC equal value for 100%
- * 
+ *
  */
 #define max_val 450
 #define min_val 30
@@ -35,7 +37,7 @@
 
 /**
  * @brief Initialization GPIO for soil humidity sensor
- * 
+ *
  */
 void hum_init(){
     hum_sensor_DDR &= ~(1<<hum_sensor); //set as input
@@ -49,24 +51,30 @@ void hum_init(){
  * @return uint16_t readed ADC value (0-1024)
  */
 uint16_t read_adc(){
+    //pullup on (anti-corosion protection)
+    hum_sensor_PORT |= (1<<hum_sensor);
+    //disable global interrupts
+    cli();
     //store actual used ADC setting
     uint8_t ADCSRA_backup = ADCSRA;
     uint8_t ADMUX_backup = ADMUX;
-    //pullup on (anti-corosion protection)
-    hum_sensor_PORT |= (1<<hum_sensor); 
     //reference from AREF pin; Multiplexor set for PC5
+    ADMUX = 0x00;
+    ADCSRA = 0x00;
     ADMUX = (1<<REFS0)| hum_sensor;
     //enable ADC, prescaler 128, start conversion
     ADCSRA = (1<<ADEN)|(1<<ADSC)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0); //SET ADC SFR
     //wait for complete conversion (pooling)
     while ((ADCSRA&(1<<ADIF))==0){
-        _delay_us(1); 
+        _delay_us(1);
     }
     // read adc value
     uint16_t adc_val = ADC;
     //restore original ADC setting
     ADMUX = ADMUX_backup;
     ADCSRA = ADCSRA_backup;
+    //enable global interrupts
+    sei();
     //pullup off (anti-corosion protection)
     hum_sensor_PORT &= ~(1<<hum_sensor); 
 
@@ -76,11 +84,11 @@ uint16_t read_adc(){
 /**
  * @brief function return coresponding humidity
  * due to min_val and max_val
- * 
+ *
  * @param val readed analog val from ADC
  * @return long 0-100% soil humidity
  */
-long to_percent(long val){
+uint8_t to_percent(uint16_t val){
     //limiting extrem values
     if(val >= max_val) return 0;
     if(val <= min_val) return 100;
@@ -95,6 +103,6 @@ long to_percent(long val){
  */
 uint8_t read_hum(){
     return to_percent(read_adc());
-
 }
+
 #endif

@@ -31,10 +31,9 @@ uint8_t key_press_detect_deb(uint8_t button, uint16_t *ADC_key_value){
  **********************************************************************/
 uint8_t key_press_detect(uint16_t *ADC_key_value){
     uint16_t value;
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        value = *ADC_key_value;
-    }
+    cli();
+    value = *ADC_key_value;
+    sei();
     if (value == 65535){            // compare only actual data
         return 0;
     }
