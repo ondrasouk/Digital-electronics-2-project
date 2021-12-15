@@ -50,26 +50,27 @@ Link to this file in your GitHub repository:
 
 The solution is designed on an Arduino Uno board with sensors connected to external pins.
 
-### Arduino Uno board
+### Arduino Uno board 
 [Arduino Uno board](Docs/arduino_shield.pdf)
-![Arduino_uno_board](Docs/HW/Arduino_uno_shield.png)
+
+![Arduino_uno_board](Docs/HW/Images/Arduino_uno_shield_.png)
 
 
 ### LCD keypad Shield
 [LCD keypad Shield](Docs/arduino_shield.pdf)
-![LCD_keypad_shield](Docs/HW/LCD_keypad_shield.png)
+![LCD_keypad_shield](Docs/HW/Images/LCD_keypad_shield_.png)
 
 ### Water lever sensor
 The solution contains of five sensors working on a resistive basis, placed on a panel. The top of the panel is attached to the lid of a canister with water. Six wires are brought out of the main board to the panel. One is for the reference (ground), other five are each in different height. The sensor contact surfaces are stainless steel screws placed on the panel. 
 
-![Water_level_sensor](HW/doc_HW/water_sensor.jpeg)
+![Water_level_sensor](Docs/HW/Images/water_sensor.jpeg)
 
 For more informations see TODO (doxygen - libs doc) or [hardware documentation](Docs/HW/readme.md).
 
 ### Soil moisture sensor
 The sensor is based on different conductivities of the soil according to the moisture of the soil. Two wires are cennected to the nails, which are placed in the soil. The resistivity is evaluated in central logic.
 
-![Soil_moisture_sensor](HW/doc_HW/hum_sensor.jpeg)
+![Soil_moisture_sensor](Docs/HW/Images/hum_sensor.jpeg)
 
 For more informations see TODO (doxygen - libs doc) or [hardware documentation](Docs/HW/readme.md).
 
