@@ -56,3 +56,4 @@ dkms.conf
 *.lss
 *.kate-swp
 *.DS_Store
+.DS_Store
