@@ -55,3 +55,4 @@ dkms.conf
 .cache/
 *.lss
 *.kate-swp
+*.DS_Store
