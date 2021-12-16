@@ -32,6 +32,10 @@
 #define TIM2_OVERFLOW_TIME 16384
 #define MENU_TIMEOUT_USEC 10000000
 
+#define pump_port PORTC	//rele & pump
+#define pump_gpio  2
+#define pump_ddr DDRC
+
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
@@ -42,7 +46,9 @@
 /*--------------------------------------------------------------------*/
 /* Globals -----------------------------------------------------------*/
 /*--------------------------------------------------------------------*/
-
+/**
+ * @brief Custom character definition
+ */
 /* Custom Characters -------------------------------------------------*/
 // Custom character definition using https://omerk.github.io/lcdchargen/
 const uint8_t customChar[] = {
@@ -408,13 +414,93 @@ void display_status()
     
 }
 
-/**********************************************************************
- * Function: Main function where the program execution begins
- * Purpose:  TODO
- * Returns:  none
- **********************************************************************/
+/***********************************************************************
+logic function part
+***********************************************************************/
+/**
+ * @brief function checks humidity sensor and count needed amount of water
+ * @return int number which represents amount of water in ml. Returns -1 when there is bug with humidity sensor
+ *
+*/
+int check_plants(){
+	int humidity = read_hum(); //check humidity
+	if (humidity > 100)
+		return -1;
+	else if (humidity > 60)
+		return 0;
+	else
+		return (800-5*humidity); //in ml
+}
+
+/**
+ * @brief	main logic function
+ * @detail	function contains fix variable for sets pump flow
+ * @param	note	pointer to note variable.
+ * @detail	for storing code for display information about main process (1 - water run out, 2 - no watering humidity high
+ * @param	err	pointer to err variable
+ * @detail	for storing err code for display (1 - humidity sensor bug, 2 - level sensor bug) 
+ * @return  function returns amount of needed water. 0 means no water need                                                                  
+*/
+
+int main_event(int *note, int *err){
+	int level;
+	int water_needed = check_plants();
+	float pump = 0.01; //pump flow (original 10l/h) 0.01ml/4ms
+	
+	level = read_level();
+	if (level == 255)
+	{
+		*err = 2;
+		level = force_read_level();
+	}
+	
+	if (water_needed == -1)
+	*err = 1; 	//display - bug with humidity sensors
+	else if (water_needed != 0 && level != 0)
+	{
+		//watering(water_needed, 1); //nebo return èas k zalívání
+		return (water_needed/pump);
+	}
+	else if (level == 0)
+	{
+		*note = 1; //display water run out
+		return 0;
+	}
+	else
+	{
+		*note = 2; //display - no watering
+		return 0;
+	}
+}
+
+/**
+ * @brief	Main function initialize all components, sets values for LCD display and provides infinite loop
+ * @detail	infinite loop contain refreshing LCD display, counting time for main event and counting time for opened pump
+ * @return	none
+ */
 int main(void)
 {
+    /**
+	* @brief Initialization of all periphery:
+	* @detail Pupm sets as: output, with pull up
+	* @detail level sensors sets as: input, with pull up
+	* @detail humidity sensor sets as: input, without pull up                                                                     
+    */
+	//Initialize pump
+	pump_ddr = pump_ddr | (1<<pump_gpio); //output
+	pump_port = pump_port | (1<<pump_gpio);   // Set pull up
+	pump_port = pump_port & (1<<pump_gpio);	//write high
+	//Initialize sensors
+	level_sens_init();
+	hum_init();
+    
+    //variables for main program
+	float cnt = 0;
+	int water = 0;
+	int note = 0;
+	int err = 0;
+    
+
     // Initialize LCD display
     lcd_init(LCD_DISP_ON);
     // Upload custom characters
@@ -489,6 +575,22 @@ int main(void)
             }
             display_status();
         }
+        
+        
+        //counter for logic
+        cnt++; 
+		if (cnt >= 900000){ //if hour
+			cnt = 0;
+			water = main_event(&note, &err); //water has tome for this setup of counting... if RTC there is need to change variable in main_event
+		}
+		else if (water > 0){
+			pump_port = pump_port & ~(1<<pump_gpio); //open pump
+			water--;
+			if (water == 0){
+				pump_port = pump_port & (1<<pump_gpio); //close pump
+			}
+		}
+        //ends here
     }
 
     // Will never reach this
@@ -496,19 +598,19 @@ int main(void)
 }
 
 /* Interrupt service routines ----------------------------------------*/
-/**********************************************************************
- * Function: Timer/Counter2 overflow interrupt
- * Purpose:  Use single conversion mode and start.
- **********************************************************************/
+/**
+ * @brief	Timer/Counter2 overflow interrupt
+ * @detail	Use single conversion mode and start.
+ */
 ISR(TIMER1_OVF_vect)
 {
     // Signal to main
     TIM1_flag++;
 }
-/**********************************************************************
- * Function: Timer/Counter2 overflow interrupt
- * Purpose:  Use single conversion mode and start.
- **********************************************************************/
+/**
+ * @brief	Timer/Counter2 overflow interrupt
+ * @detail	Use single conversion mode and start.
+ */
 ISR(TIMER2_OVF_vect)
 {
     // Start ADC conversion
@@ -517,10 +619,10 @@ ISR(TIMER2_OVF_vect)
     ADCSRA |= (1 << ADSC);
 }
 
-/**********************************************************************
- * Function: ADC complete interrupt
- * Purpose:  Copy ADC value.
- **********************************************************************/
+/**
+ * @brief	ADC complete interrupt
+ * @detail	Copy ADC value.
+ */
 ISR(ADC_vect) 
 {
     ADC_key_value = ADC;  
