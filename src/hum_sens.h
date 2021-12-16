@@ -22,7 +22,7 @@
  * @brief GPIO humidity sensor definitions definitions
  *
  */
-#define hum_sensor PC5
+#define hum_sensor PC3
 #define hum_sensor_PORT PORTC
 #define hum_sensor_DDR DDRC
 /**

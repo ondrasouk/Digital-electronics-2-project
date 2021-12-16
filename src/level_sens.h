@@ -19,22 +19,25 @@
  * water-level sensors.
  * 
  */
+#define sensor1_pin PINC
 #define sensor1_port &PORTC //lowest watter sensor
 #define sensor1_gpio  1
+
+#define sensor2_pin PINC
 #define sensor2_port &PORTC
 #define sensor2_gpio  2
-#define sensor3_port &PORTC
-#define sensor3_gpio  3
-#define sensor4_port &PORTC
-#define sensor4_gpio  4
+
+#define sensor3_pin PINB
+#define sensor3_port &PORTB
+#define sensor3_gpio  2
+
+#define sensor4_pin PIND
+#define sensor4_port &PORTD
+#define sensor4_gpio  3
+
+#define sensor5_pin PIND
 #define sensor5_port &PORTD //higest watter sensor
 #define sensor5_gpio  2
-//will REDO in future
-#define sensor1_pin PINC
-#define sensor2_pin PINC
-#define sensor3_pin PINC
-#define sensor4_pin PINC
-#define sensor5_pin PIND
 
 #define sensors_data_mask 0b00011111 // mask for data byte
 // includes --------------------------------------------------------
