@@ -36,6 +36,11 @@
 *   GNU General Public License for more details.
 *
 *************************************************************************/
+ /**
+  * @file uart.c
+  * @author Peter Fleury
+  * @date 2015
+  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

@@ -17,6 +17,12 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+ /**
+  * @file twi.h
+  * @author Nicholas Zambetti
+  * @date 2006
+  */
+
 #ifndef TwoWire_h
 #define TwoWire_h
 

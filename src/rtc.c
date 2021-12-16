@@ -67,6 +67,11 @@
  * 12h: LSB of temp in bits 7 and 6 (0.25 degrees for each 00, 01, 10, 11)
  *
  */
+ /**
+  * @file rtc.c
+  * @author Akafugu
+  * @date 2011
+  */ 
 
 #include <avr/io.h>
 
