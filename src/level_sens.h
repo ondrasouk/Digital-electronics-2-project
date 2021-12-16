@@ -29,7 +29,7 @@
 
 #define sensor3_pin PINB
 #define sensor3_port &PORTB
-#define sensor3_gpio  2
+#define sensor3_gpio  3
 
 #define sensor4_pin PIND
 #define sensor4_port &PORTD
