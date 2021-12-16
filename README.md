@@ -35,12 +35,12 @@ Link to this file in your GitHub repository:
     * Realization
         * [x] Use of sensors
         * [x] Individual blocks of code
-        * [ ] Verification of the functionality
-        * [ ] Generating HEX file
+        * [x] Verification of the functionality
+        * [x] Generating HEX file
     * Presentation
-        * [ ] Documentation
-        * [ ] Discussion of results
-        * [ ] Video presentation
+        * [x] Documentation
+        * [x] Discussion of results
+        * [x] Video presentation
 
 * done:
     * Irrigation system. Water level - controlling sensor is placed in the tank and measures the water level (5 levels). Sensor for measuring soil moisture is placed in a soil and both send data to control logic, where are evaluated. If there is enough water in the tank and soil moisture is under specific value, water pump is activated. After certain time period another measuring is made. User can choose from three modes of irrigation. More info about the system is in the [video](https://youtu.be/Qcah5Nm7IAs).
@@ -51,7 +51,7 @@ Link to this file in your GitHub repository:
 
 The solution is designed on an Arduino Uno board with sensors and a water pump connected to external pins.
 
-[Scheme of connection](Docs/HW/scheme.pdf)
+![Scheme of connection](Docs/HW/scheme.jpg)
 
 
 ### Arduino Uno board 
@@ -103,7 +103,7 @@ For more informations see [hardware documentation](Docs/HW/readme.md).
 <a name="libs"></a>
 
 ## Libraries description
-TODO add doxygen doc - links
+For more info see the doxygen documentation.
 
 ### ``` timer.h ```
 * Contains macros for controlling the timer modules.
@@ -119,7 +119,7 @@ TODO add doxygen doc - links
 * Author - Peter Fleury.
 
 ### ``` lcd_buttons.h ```
-
+* Includes function for button debouncing and button detection.
 
 ### ``` lcd_definitions.h ```
 * Adjust the display settings.
@@ -132,6 +132,7 @@ TODO add doxygen doc - links
 * Consist rutines to work with soil humidity sensor.
 
 ### ``` rtc.h ```
+* This library was taken over and used with rtc module.
 
 
 <a name="main"></a>
