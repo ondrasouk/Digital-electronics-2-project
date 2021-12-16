@@ -15,6 +15,7 @@
 #include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
 #include <util/atomic.h>    // Atomic operations
 #include <stdlib.h>         // C library. Needed for conversion function
+#include <stdio.h>
 #include <util/delay.h>
 #include <string.h>
 #include "timer.h"          // Timer library for AVR-GCC
@@ -23,6 +24,8 @@
 #include "lcd_buttons.h"    // Library with reading buttons
 #include "hum_sens.h"
 #include "level_sens.h"
+#include "rtc.h"
+#include "twi.h"
 
 /* Definitions -------------------------------------------------------*/
 #define DISPLAY_ROWS 2
@@ -30,7 +33,7 @@
 #define MENU_TEXT_SHIFT_TIME_USEC 400000
 #define MENU_ITEM_SIZE_D 5
 #define TIM2_OVERFLOW_TIME 16384
-#define MENU_TIMEOUT_USEC 10000000
+#define MENU_TIMEOUT_USEC 2000000
 
 #define pump_pin PINB
 #define pump_port &PORTB
@@ -91,6 +94,7 @@ const char *menu_head_items[] = {
     "smart",
     " drip",
     "const",
+    " time",
 };
 
 const char *smart_menu[] = {
@@ -183,6 +187,7 @@ uint8_t scroll_pos_shift = 255;
 char value_disp[MENU_ITEM_SIZE_D + 1] = "     ";
 
 uint8_t display_update = 1; // 0 - no update in menu, 1 - update in menu, 2 - update in menu values, 3 - no update in status page, 4 - update in status page, 5 - update in status page values
+uint8_t status_page = 0; // 0 - sensors readout, 1 - time
 
 /* Global variables --------------------------------------------------*/
 
@@ -192,9 +197,11 @@ uint16_t TIM2_display_timer = 0;
 uint16_t ADC_key_value = 65535;
 uint16_t sens_humidity = 100;
 uint8_t sens_water_level = 100;
+uint8_t pump_state = 0; // 0 - off, 1 - running
 
 uint8_t time_hours = 0;
 uint8_t time_minutes = 0;
+uint8_t time_seconds = 0;
 
 /*--------------------------------------------------------------------*/
 /* Function definitions ----------------------------------------------*/
@@ -241,6 +248,31 @@ void slice_str(const char *str, char *buffer, uint8_t start)
     strncpy(buffer, str + start, MENU_TEXT_SIZE_D - 1);
 }
 
+void itoa_with_starting_zero(uint8_t x, char *str) 
+{
+    if(x < 10){
+        itoa(x, str+1, 10);
+        str[0] = '0';
+    }
+    else if(x < 100){
+        itoa(x, str, 10);
+    }
+}
+
+void display_time(uint8_t x, uint8_t y, uint8_t h, uint8_t m, uint8_t s) 
+{
+    char str[] = "  ";
+    lcd_gotoxy(x, y);
+    itoa_with_starting_zero(h, str);
+    lcd_puts(str);
+    lcd_puts(":");
+    itoa_with_starting_zero(m, str);
+    lcd_puts(str);
+    lcd_puts(":");
+    itoa_with_starting_zero(s, str);
+    lcd_puts(str);
+}
+
 void itoa_menu_item(int value, char *str, uint8_t type)
 {
     strncpy(str, "     ", MENU_ITEM_SIZE_D); // Clear output buffer
@@ -261,13 +293,6 @@ void itoa_menu_item(int value, char *str, uint8_t type)
             itoa(value, str, 10);
         }
         str[4] = type_suffix[type];
-    }
-    else if(type == 255){ // display actual time in format HH:MM
-        strncpy(str, "00:00", 5);
-        char str2[2] = "  ";
-        itoa(time_hours, str, 10);
-        itoa(time_minutes, str2, 10);
-        strncpy(str+3, str2, 2);
     }
     else{
         if((type - ARRAY_SIZE(type_suffix)) < ARRAY_SIZE(menu_character_values_pointers)){
@@ -294,6 +319,14 @@ void TIM1_routine()
         uart_puts(str);
         if(display_update == 3){
             display_update = 5;
+        }
+        if(status_page == 0){
+            status_page = 1;
+            display_update = 4;
+        }
+        else if(status_page == 1){
+            status_page = 0;
+            display_update = 4;
         }
     }
 }
@@ -400,29 +433,62 @@ void display_menu(uint8_t key_press)
 
 void display_status() 
 {
-    if((display_update < 3)|(display_update == 4)){
-        char str[] = "Soil:           ";
-        lcd_clrscr();
-        lcd_gotoxy(0, 0); // Fix some unknown problem
-        lcd_gotoxy(0, 0);
-        itoa_menu_item(sens_humidity, str+6, 2);
-        lcd_puts(str);
-        strcpy(str, "Water:          ");
-        lcd_gotoxy(0, 1);
-        itoa_menu_item(sens_water_level, str+6, 2);
-        lcd_puts(str);
-        display_update = 3;
-    } 
-    else if (display_update == 5) {
-        lcd_gotoxy(6, 0);
-        itoa_menu_item(sens_humidity, value_disp, 2);
-        lcd_puts(value_disp);
-        lcd_gotoxy(6, 1);
-        itoa_menu_item(sens_water_level, value_disp, 2);
-        lcd_puts(value_disp);
-        display_update = 3;
+    if(status_page == 0){
+        if((display_update < 3)|(display_update == 4)){
+            char str[] = "Soil:           ";
+            lcd_clrscr();
+            lcd_gotoxy(0, 0); // Fix some unknown problem
+            lcd_gotoxy(0, 0);
+            itoa_menu_item(sens_humidity, str+6, 2);
+            lcd_puts(str);
+            strcpy(str, "Water:          ");
+            lcd_gotoxy(0, 1);
+            itoa_menu_item(sens_water_level, str+6, 2);
+            lcd_puts(str);
+            display_update = 3;
+        } 
+        else if (display_update == 5) {
+            lcd_gotoxy(6, 0);
+            itoa_menu_item(sens_humidity, value_disp, 2);
+            lcd_puts(value_disp);
+            lcd_gotoxy(6, 1);
+            itoa_menu_item(sens_water_level, value_disp, 2);
+            lcd_puts(value_disp);
+            display_update = 3;
+        }
     }
-    
+    else if(status_page == 1){
+        if((display_update < 3)|(display_update == 4)){
+            char str[] = "Time:           ";
+            lcd_clrscr();
+            lcd_gotoxy(0, 0); // Fix some unknown problem
+            lcd_gotoxy(0, 0);
+            lcd_puts(str);
+            display_time(6, 0, time_hours, time_minutes, time_seconds);
+            strcpy(str, "Pump:           ");
+            lcd_gotoxy(0, 1);
+            if(pump_state == 0){
+                strncpy(str+6, "  OFF", 5);
+            }
+            else if(pump_state == 1){
+                strncpy(str+6, "   ON", 5);
+            }
+            lcd_puts(str);
+            display_update = 3;
+        } 
+        else if (display_update == 5) {
+            display_time(6, 0, time_hours, time_minutes, time_seconds);
+            lcd_gotoxy(6, 1);
+            if(pump_state == 0){
+                strcpy(value_disp, "  OFF");
+            }
+            else if(pump_state == 1){
+                strcpy(value_disp, "   ON");
+            }
+            lcd_puts(value_disp);
+            display_update = 3;
+        }
+    }
 }
 
 /***********************************************************************
@@ -432,11 +498,13 @@ logic function part
 void pump_start()
 {
     *pump_port &= ~(1<<pump_gpio);
+    pump_state = 1;
 }
 
 void pump_stop()
 {
     *pump_port |= (1<<pump_gpio);
+    pump_state = 0;
 }
 
 
@@ -453,12 +521,15 @@ int main(void)
     //Initialize rele
     *pump_ddr |= (1<<pump_gpio); // DDR set as output
     *pump_port |= (1 << pump_gpio); // set rele off
+    // Initialize UART to asynchronous, 8N1, 9600
+    uart_init(UART_BAUD_SELECT(9600, F_CPU));
     //Initialize sensors
     level_sens_init();
     hum_init();
-    
+    sei();
+    rtc_init();
     //variables for main program
-    
+    char buf[32];
 
     // Initialize LCD display
     lcd_init(LCD_DISP_ON);
@@ -474,8 +545,6 @@ int main(void)
     char str[16] = "                ";
     itoa(mode_menu_lenght[1], str, 10);
     lcd_puts(str);
-    lcd_puts(" ");
-    lcd_puts(mode_menu_pointers[0][1]);
     // Print the custom characters on display
     lcd_gotoxy(0, 1);
     for (uint8_t i = 0; i < sizeof(customChar)/8; i++)
@@ -485,6 +554,7 @@ int main(void)
     pump_start(); // Test the rele
     _delay_ms(1000);
     pump_stop();
+    rtc_set_time_s(12, 15, 50);
     // Configure ADC to convert PC0[A0] analog value
     // Set ADC reference to AVcc
     ADMUX |= (1 << REFS0);
@@ -504,18 +574,18 @@ int main(void)
     // Set prescaler to 4 s and enable overflow interrupt
     TIM1_overflow_1s();
     TIM1_overflow_interrupt_enable();
-    // Initialize UART to asynchronous, 8N1, 9600
-    uart_init(UART_BAUD_SELECT(9600, F_CPU));
     // Initialize sensors
     hum_init();
     level_sens_init();
-    // Enables interrupts by setting the global interrupt mask
-    sei();
     
     uint8_t key_press = 0;
     display_menu(0);
     // Infinite loop
     while (1) {
+        rtc_get_time_s(&time_hours, &time_minutes, &time_seconds);
+        sprintf(buf, "%d:%d:%d\n", time_hours, time_minutes, time_seconds);
+        uart_puts(buf);
+        uart_puts("---\n\r");
         TIM2_routine();
         TIM1_routine();
         key_press = key_press_detect(&ADC_key_value);
