@@ -4,8 +4,13 @@
  * @section Oveeall data
  * @author      Pavel Vanek
  * @author      Ondrej Soukenik
+<<<<<<< HEAD:src/doxy_main.h
  * @author      Zuzana Varmuzova
  * @author      Michaela Rysava
+=======
+ * @author      Zdenka Varmuzova
+ * @author      Michaela Ryšava
+>>>>>>> df13011e5b6e7a4a76afdd674e0574bcf85c4329:doxy_main.txt
  * 
  * @date    16.12.2021
  * 

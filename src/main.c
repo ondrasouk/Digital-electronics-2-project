@@ -258,7 +258,7 @@ void pump_stop()
 /**
  * @ingroup pump
  * @brief Function for watering - smart mode
- * @details 
+ * @detail 
  */ 
 void smart_mode() 
 {
@@ -272,7 +272,7 @@ void smart_mode()
 /**
  * @ingroup pump
  * @brief Function for watering drip mode
- * @details
+ * @detail
  */
 void drip_mode() 
 {
@@ -286,7 +286,7 @@ void drip_mode()
 /**
  * @ingroup pump
  * @brief Function for watering constant mode
- * @details
+ * @detail
  */
 void const_mode()
 {
@@ -301,7 +301,7 @@ void const_mode()
 /**
  * @ingroup pump
  * @brief Function for switching between each modes
- * @details
+ * @detail
  */
 void watering_mode(uint8_t mode){
     switch (mode)
