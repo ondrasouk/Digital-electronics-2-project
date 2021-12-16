@@ -192,6 +192,9 @@ uint16_t ADC_key_value = 65535;
 uint16_t sens_humidity = 100;
 uint8_t sens_water_level = 100;
 
+uint8_t time_hours = 0;
+uint8_t time_minutes = 0;
+
 /*--------------------------------------------------------------------*/
 /* Function definitions ----------------------------------------------*/
 /*--------------------------------------------------------------------*/
@@ -257,6 +260,13 @@ void itoa_menu_item(int value, char *str, uint8_t type)
             itoa(value, str, 10);
         }
         str[4] = type_suffix[type];
+    }
+    else if(type == 255){ // display actual time in format HH:MM
+        strncpy(str, "00:00", 5);
+        char str2[2] = "  ";
+        itoa(time_hours, str, 10);
+        itoa(time_minutes, str2, 10);
+        strncpy(str+3, str2, 2);
     }
     else{
         if((type - ARRAY_SIZE(type_suffix)) < ARRAY_SIZE(menu_character_values_pointers)){
