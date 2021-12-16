@@ -11,6 +11,7 @@
  ***************************************************************************/
 
 /**
+ * @ingroup lcd
  * @file
  * @defgroup pfleury_lcd LCD library <lcd.h>
  * @code #include <lcd.h> @endcode

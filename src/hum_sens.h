@@ -1,6 +1,7 @@
 #ifndef HUM_SENS_H
 #define HUM_SENS_H
 /**
+ * @ingroup hum
  * @file hum_sens.h
  * @author Pavel Vanek (xvanek39@vutbr.cz)
  * @brief Consist rutines to work with soil humidity sensor.
@@ -19,20 +20,16 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>  // Interrupts standard C library for AVR-GCC
 /**
- * @brief GPIO humidity sensor definitions definitions
- *
+ * @name GPIO humidity sensor definitions definitions
  */
 #define hum_sensor PC3
 #define hum_sensor_PORT PORTC
 #define hum_sensor_DDR DDRC
 /**
- * @brief Calibration ADC values for soil humidity transversion
- * @param max_val ADC equal value for 0%
- * @param min_val ADC equal value for 100%
- *
+ * @name Calibration ADC values for soil humidity transversion
  */
-#define max_val 450
-#define min_val 30
+#define max_val 450 /** < ADC equal value for 0% */
+#define min_val 30  /** < ADC equal value for 100% */
 
 
 /**
@@ -40,13 +37,14 @@
  *
  */
 void hum_init(){
-    hum_sensor_DDR &= ~(1<<hum_sensor); //set as input
-    hum_sensor_PORT &= ~(1<<hum_sensor); //pullup off
+    hum_sensor_DDR &= ~(1<<hum_sensor); /**set as input*/
+    hum_sensor_PORT &= ~(1<<hum_sensor); /**pullup off*/
 }
 /**
- * @brief Function read raw analog data from hum_sensor pin.
- * Function also automaticaly turns off pullup resistor to prevent corosion
- * of probec due electrolysis.
+ * @ingroup hum
+ * @brief  Function for main operation with humidity sensor
+ * @detail Function read raw analog data from hum_sensor pin.
+ * @detail Function also automaticaly turns off pullup resistor to prevent corosion of probec due electrolysis.
  * 
  * @return uint16_t readed ADC value (0-1024)
  */
@@ -82,8 +80,9 @@ uint16_t read_adc(){
 }
 
 /**
- * @brief function return coresponding humidity
- * due to min_val and max_val
+ * @ingroup hum
+ * @brief Function for transfering raw value to homidity in %
+ * @detail function return coresponding humidity due to min_val and max_val
  *
  * @param val readed analog val from ADC
  * @return long 0-100% soil humidity
@@ -96,7 +95,9 @@ uint8_t to_percent(uint16_t val){
     return 100 - (val - min_val) * (100) / (max_val - min_val);
 }
 /**
- * @brief Function read value from ADC and recalculate to percent
+ * @ingroup hum
+ * @brief  function for easy calling from main program
+ * @detail Function read value from ADC and recalculate to percent
  * consist functions:- long to_percent(long val)
  *                   - uint16_t read_adc()
  * @return uint8_t 0-100% adecvate soil humidity level

@@ -1,6 +1,9 @@
 #include <avr/io.h>         // AVR device-specific IO definitions
 #include <util/atomic.h>    // Atomic operations
-
+/**
+ * @file lcd_buttons.c
+ * @author Ondrej Soukenik
+ */
 
 uint8_t key_pressed = 5;
 uint8_t key_times = 0;

@@ -12,6 +12,12 @@
  * PARTICULAR PURPOSE.  See the GNU General Public License for more details.
  *
  */
+ 
+ /**
+  * @ingroup rtc
+  * @file rtc.h
+  * @author Akafugu Corporation
+  */ 
 
 #ifndef DS1307_H
 #define DS1307_H
@@ -38,6 +44,16 @@
  * and translation has to be done manually (you can call rtc_24h_to_12h to perform the calculation)
  *
  */
+ /**
+  * @ingroup rtc
+  * @defgroup obj   Objects
+  */
+  
+  /**
+   * @ingroup obj
+   * @brief Structure of time variables
+   * @detail variables for seconds. minutes, hours, day in month, months, years, day in week and switch for 12/24 cycle
+   */ 
 struct tm {
 	int sec;      // 0 to 59
 	int min;      // 0 to 59
@@ -55,10 +71,24 @@ struct tm {
 // statically allocated 
 extern struct tm _tm;
 
-// Initialize the RTC and autodetect type (DS1307 or DS3231)
+/**
+ * @ingroup rtc
+ * @brief Initialize the RTC and autodetect type (DS1307 or DS3231)
+ * @detail Attempt autodetection:
+	       1) Read and save temperature register
+	       2) Write a value to temperature register
+	       3) Read back the value
+	       equal to the one written: DS1307, write back saved value and return
+ * @retusn 0 if communication is ok, 1 if fail
+ */
 uint8_t rtc_init(void);
-
+/**
+ * @brief set type of RTC to 1307
+ */ 
 void rtc_set_ds1307(void);
+/**
+ * @brief set type of RTC to 3231
+ */ 
 void rtc_set_ds3231(void);
 
 // Get/set time
@@ -72,14 +102,40 @@ void rtc_set_time(struct tm* tm_);
 void rtc_set_time_s(uint8_t hour, uint8_t min, uint8_t sec);
 
 // start/stop clock running (DS1307 only)
+/**
+ * @brief start/stop clock run (DS1307 only)
+ */
 void    rtc_run_clock(uint8_t run);
+/**
+ * @brief Check if clock run
+ * 
+ */ 
 uint8_t rtc_is_clock_running(void);
 
 
 // SRAM read/write DS1307 only
+/**
+ * @brief function reads value of whole 56 bytes
+ * @detail because it's impossible to read that much in one, function calls rtc_get_sram_byte and saves it in structure
+ * @param data structure where to store red data
+ */
 void rtc_get_sram(uint8_t* data);
+/**
+ * @brief function sets value of whole 56 bytes
+ * @detail because it's impossible to read that much in one, function calls rtc_gset_sram_byte and sets it gradually
+ * @param data structure where to find data for setting
+ */
 void rtc_set_sram(uint8_t *data);
+/**
+ * @brief function reads value to relevant byte
+ * @param offset register id
+ */
 uint8_t rtc_get_sram_byte(uint8_t offset);
+/**
+ * @brief function writes value to relevant byte
+ * @param b value of time variable
+ * @param offset register id
+ */
 void rtc_set_sram_byte(uint8_t b, uint8_t offset);
 
 // Auxillary functions
@@ -90,11 +146,41 @@ void rtc_SQW_set_freq(enum RTC_SQW_FREQ freq);
 void rtc_osc32kHz_enable(bool enable);
 
 // Alarm functionality
+
+/**
+ * @brief Function for reset alarm
+ */
 void rtc_reset_alarm(void);
+/**
+ * @brief set alarm to timee saved in structure tm
+ * @param tm_ structure for storing time variables  
+ */
 void rtc_set_alarm(struct tm* tm_);
+/**
+ * @brief auxiliary function for rtc_set_alarm
+ * @detail function call another functions and give them variable value and number of pin
+ * @param hour variable from structure tm_
+ * @parm min   variable from structure tm_
+ * @parm sec   variable from structure tm_
+ */
 void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec);
+/**
+ * @brief  function for reading time from alarm
+ * @detail function fall rtc_get_alarm_s to get time values and store it in tm structur
+ */ 
 struct tm* rtc_get_alarm(void);
+/**
+ * @brief  function reads data from rtc and save them in given variables
+ * @param hour pointer for hour variable
+ * @param min pointer for minute variable
+ * @param sec pointer for second variable
+ */
 void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
+/**
+ * @brief check alarm
+ * @derail function reads values of rtc and when they match sets data, it returns true, else if returns false
+ * @return true when alarm finishes, false when alarm rums
+ */ 
 bool rtc_check_alarm(void);  
 
 #endif

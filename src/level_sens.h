@@ -15,8 +15,7 @@
 
 
 /**
- * @brief Definitions of used pins to connect
- * water-level sensors.
+ * @name Definitions of used pins to connect water-level sensors.
  * 
  */
 #define sensor1_pin PINC
@@ -44,7 +43,9 @@
 #include <avr/io.h>         // AVR device-specific IO definitions
 
 /**
- * @brief Function initialise GPIO for water-level sensors
+ * @ingroupp water
+ * @brief  Function for initialisation of water level sensors
+ * @detail Function initialise GPIO for water-level sensors
  * all sensors are sat as INPUT with PULLUP resistor
  * 
  */
@@ -65,7 +66,9 @@ void level_sens_init (void){
 
 
 /**
- * @brief Function read all water-sensors and compute adecvate watter-level.
+ * @ingroup water
+ * @brief  Function for main comunication with water level sensor
+ * @detail Function read all water-sensors and compute adecvate watter-level.
  * Function also checks for degradation of sensor(in case of corosion). In case that sensors are not flooded
  * sequtialy, function returns value 255 as ERROR state.
  * For reading without checking error state use force_read_level();
@@ -97,7 +100,9 @@ uint8_t read_level(void){
     }
 }
 /**
- * @brief Function read all watter-sensors and ignore error state
+ * @ingroup water
+ * @brief  Function for main comunication with water level sensor without error states
+ * @detail Function read all watter-sensors and ignore error state
  * 
  * @return uint8_t adecvate water-level (0 to 5) (empty - full)
  */

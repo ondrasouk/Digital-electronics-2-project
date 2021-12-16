@@ -9,6 +9,10 @@
  * This work is licensed under the terms of the MIT license.
  * 
  **********************************************************************/
+ /**
+  * @file main.c
+  * @author Ondrej Soukenik
+  */ 
 
 /* Includes ----------------------------------------------------------*/
 #include <avr/io.h>         // AVR device-specific IO definitions
@@ -77,6 +81,10 @@ const uint8_t customChar[] = {
 const char type_suffix[5] = "  %ms";
 
 /* Structures definitions --------------------------------------------*/
+/**
+ * @ingroup lcd
+ * @brief structure for menu
+ */ 
 typedef struct {
     const uint8_t type; // 1 - plain; 2 - with "%"; 3 - with "m"; 4 - with "s"; higher is character menu items
     const uint8_t limit_min;
@@ -229,18 +237,29 @@ uint8_t pump_state = 0; // 0 - off, 1 - running
 /* Pump control Function definitions ---------------------------------*/
 /*--------------------------------------------------------------------*/
 
+/**
+ * @ingroup pump
+ * @brief Function starts watering
+ */ 
 void pump_start()
 {
     *pump_port &= ~(1<<pump_gpio);
     pump_state = 1;
 }
-
+/**
+ * @ingroup pump
+ * @brief Function stops watering
+ */ 
 void pump_stop()
 {
     *pump_port |= (1<<pump_gpio);
     pump_state = 0;
 }
-
+/**
+ * @ingroup pump
+ * @brief Function for watering - smart mode
+ * @detail 
+ */ 
 void smart_mode() 
 {
     if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
@@ -250,7 +269,11 @@ void smart_mode()
         pump_stop();
     }
 }
-
+/**
+ * @ingroup pump
+ * @brief Function for watering drip mode
+ * @detail
+ */
 void drip_mode() 
 {
     if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
@@ -260,7 +283,11 @@ void drip_mode()
         pump_stop();
     }
 }
-
+/**
+ * @ingroup pump
+ * @brief Function for watering constant mode
+ * @detail
+ */
 void const_mode()
 {
     if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
@@ -271,6 +298,11 @@ void const_mode()
     }
 }
 
+/**
+ * @ingroup pump
+ * @brief Function for switching between each modes
+ * @detail
+ */
 void watering_mode(uint8_t mode){
     switch (mode)
     {
@@ -292,7 +324,15 @@ void watering_mode(uint8_t mode){
 /* Display Function definitions --------------------------------------*/
 /*--------------------------------------------------------------------*/
 
-// přidá jedna, pokud je vyšší než lim_max, tak se nastavá hodnota lim_min. Použito v menu pro přepínání textových hodnot.
+/**
+ * @ingroup lcd
+ * @brief Function for cyclic increment of value
+ * @detail If value is greater than max value, function sets min value
+ * @detail Function is used for shifting menu
+ * @param x pointer to x, line in nemu
+ * @param lim_min minimum of range of x
+ * @param lim_max maximum for range of x
+ */ 
 void cyclic_inc(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
 {
     uint8_t value = *x;
@@ -301,7 +341,15 @@ void cyclic_inc(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
         *x = lim_min;
     }
 }
-
+/**
+ * @ingroup lcd
+ * @brief Function for cyclic decrement of value
+ * @detail If value is smaller than min value, function sets max value
+ * @detail Function is used for shifting menu
+ * @param x pointer to x, line in nemu
+ * @param lim_min minimum of range of x
+ * @param lim_max maximum for range of x
+ */
 void cyclic_dec(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
 {
     uint8_t value = *x;
@@ -311,7 +359,16 @@ void cyclic_dec(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
     }
 }
 
-// Zvětší o jedna, pokud je vyšší než limit, tak se nastaví limit. Použito v menu pro nastavené proměnných v menu.
+
+/**
+ * @ingroup lcd
+ * @brief Function for increment of value in certain range
+ * @detail If value is greater than max value, function sets max value
+ * @detail Function is used for shifting menu
+ * @param x pointer to x, line in nemu
+ * @param lim_min minimum of range of x
+ * @param lim_max maximum for rangl of x
+ */ 
 void limited_inc(uint8_t *x, const uint8_t lim, const uint8_t step)
 {
     uint8_t value = *x;
@@ -320,7 +377,15 @@ void limited_inc(uint8_t *x, const uint8_t lim, const uint8_t step)
         *x = lim;
     }
 }
-
+/**
+ * @ingroup lcd
+ * @brief Function for decrement of value in certain range
+ * @detail If value is grater than min value, function sets min value
+ * @detail Function is used for shifting menu
+ * @param x pointer to x, line in nemu
+ * @param lim_min minimum of range of x
+ * @param lim_max maximum for range of x
+ */ 
 void limited_dec(uint8_t *x, const uint8_t lim, const uint8_t step)
 {
     uint8_t value = *x;
@@ -330,13 +395,26 @@ void limited_dec(uint8_t *x, const uint8_t lim, const uint8_t step)
     }
 }
 
-// ořezání stringu, použito pro efekt posouvání dlouhého textu.
+/**
+ * @ingroup lcd
+ * @brief Function for cutting string for scrolling long text
+ * @param str pointer to string
+ * @param buffer how long string can be displayed
+ * @param start position in string from where it should be displayed
+ */ 
 void slice_str(const char *str, char *buffer, uint8_t start)
 {
     strncpy(buffer, str + start, MENU_TEXT_SIZE_D - 1);
 }
 
-// 1 -> "01"; 25 -> "25", použito pro zobrazenní času.
+/**
+ * @ingroup lcd
+ * @brief Function for editing format of number
+ * @detail Function is used for displaying time
+ * @detail 1 -> "01"; 25 -> "25"
+ * @param x number with time value
+ * @param str output edited time value
+ */
 void itoa_with_starting_zero(uint8_t x, char *str) 
 {
     if(x < 10){
@@ -348,7 +426,15 @@ void itoa_with_starting_zero(uint8_t x, char *str)
     }
 }
 
-// Zobrazení času na displeji
+/**
+ * @ingroup lcd
+ * @brief Function displaying time on LCD
+ * @param x horizontal position
+ * @param y vertical position
+ * @param h hours value
+ * @param m minutes value
+ * @param s seconds value
+ */
 void display_time(uint8_t x, uint8_t y, uint8_t h, uint8_t m, uint8_t s) 
 {
     char str[] = "  ";
@@ -363,7 +449,13 @@ void display_time(uint8_t x, uint8_t y, uint8_t h, uint8_t m, uint8_t s)
     lcd_puts(str);
 }
 
-// speciální funkce pro nahrnutí do stringu. Kdy value je to co se má dát za hodnotu do str. type je typ ze struktury.
+/**
+ * @ingroup lcd
+ * @brief Function for convert value to string with certain type
+ * @param value value which should be converted to "type" type and saved in str
+ * @param str pointer to output str variable
+ * @param type type from structure
+ */
 void itoa_menu_item(int value, char *str, uint8_t type)
 {
     strncpy(str, "     ", MENU_ITEM_SIZE_D); // Clear output buffer
@@ -395,8 +487,12 @@ void itoa_menu_item(int value, char *str, uint8_t type)
     }
 }
 
-// Když bylo přerušení na TIMER1, tak to tady projde. Taky zavolá ovládání zalévání.
-
+/**
+ * @ingroup lcd
+ * @brief Timer 1 routine
+ * @detail function checks sensors and update display
+ * @detail if needed, function call watering process
+ */ 
 void TIM1_routine() 
 {
     if(TIM1_flag){
@@ -425,7 +521,11 @@ void TIM1_routine()
     }
 }
 
-// tohle slouží jen pro posuv dlouhého textu na displeji.
+/**
+ * @ingroup lcd
+ * @brief Timer 2 routine
+ * @detail server for shifting long text in line
+ */ 
 void TIM2_routine() 
 {
     if(scroll_pos_shift != 255){
@@ -450,7 +550,12 @@ void TIM2_routine()
     }
 }
 
-// vykreslení jednoho řádku menu. Vstup: menu_entries je to zvolené menu
+/**
+ * @ingroup lcd
+ * @brief Function for display one line of menu
+ * @param menu_entries[] chosen menu
+ * @param line line to display
+ */ 
 void menu_line_print(const char *menu_entries[], uint8_t line)
 {
     lcd_gotoxy(1,line);
@@ -471,7 +576,13 @@ void menu_line_print(const char *menu_entries[], uint8_t line)
     lcd_puts(value_disp);
 }
 
-// funkce pro pohyb v menu a volání menu_line_print. Také pouští efekt posuvu dlouhého textu.
+/**
+ * @ingroup lcd
+ * @brief Function for displaying and scrolling in menu
+ * @detail function display start position of menu and redisplay lines when key for scrolling is pressed
+ * @detail when menu text is too long, it runs function for line scrolling
+ * @param key_press define direction for scrolling
+ */ 
 void display_menu(uint8_t key_press)
 {
     item_uint8 menu_item = mode_menu_items[irrigation_mode][CURSOR_POS];
@@ -525,8 +636,14 @@ void display_menu(uint8_t key_press)
     shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
 }
 
-// display status. Two screens one screen with soil humidity and water level and on second screen time and status of pump.
-// Look for comment at update_display variable.
+/**
+ * @ingroup lcd
+ * @brief function for displaying status
+ * @detail "what's going on" function has 2 screen.
+ * first: screen with soil humidity and water level
+ * second: screen time and status of pump
+ * @detail function looks for comment at update_display variable
+ */ 
 void display_status() 
 {
     if(status_page == 0){
@@ -591,14 +708,11 @@ void display_status()
 
 /**
  * @brief	Main function initialize all components, sets values for LCD display and provides infinite loop
- * @detail	infinite loop contain refreshing LCD display, counting time for main event and counting time for opened pump
+ * @detail	infinite loop contain 2 timers, each timer has its own routine
  * @return	none
  */
 int main(void)
 {
-    /**
-    * @brief Initialization of all periphery:
-    */
     //Initialize rele
     *pump_ddr |= (1<<pump_gpio); // DDR set as output
     *pump_port |= (1 << pump_gpio); // set rele off
@@ -687,7 +801,7 @@ int main(void)
 
 /* Interrupt service routines ----------------------------------------*/
 /**
- * @brief	Timer/Counter2 overflow interrupt
+ * @brief	Timer/Counter1 overflow interrupt
  * @detail	Use single conversion mode and start.
  */
 ISR(TIMER1_OVF_vect)
