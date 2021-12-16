@@ -139,7 +139,7 @@ For more info see the doxygen documentation.
 
 ## Main application
 
-![watering system scheme](Docs/HW/watering_system.jpg)
+![watering system scheme](Docs/HW/Images/watering_system.jpg)
 
 <a name="video"></a>
 
