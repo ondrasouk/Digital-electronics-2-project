@@ -1,13 +1,13 @@
 # Hardware documentation 
 
 ## Arduino Uno board
-The basis is formed on an Arduino Uno board. 
+The basis is formed on an microrontroller board called Arduino Uno based on the ATmega328P ([datasheet](Docs/ATmega328p_Datasheet.pdf)). It has 20 digital (input or output) pins and runs with 16 Mhz frequency. The power supply and data tranfer is solved by USB connection with PC.
 
 ![Arduino_uno_board](Images/Arduino_uno_shield.png)
 
 # LCD keypad Shield
-It is necessary to set the time at the start. For this purpose are used buttons. LCD screen is used for displaying measured values.
-
+The LCD Keypad Shield  is compatible with Arduino boards. It consists of a 1602 white character blue backlight LCD. The keypad consists of 5 keys (select, up, right, down and left). For reading of the key value is used only one ADC channel, the evaluation is performed with the help of five stage voltage divider. 
+[See datasheet here.](Docs/Datasheet_DFR0009_D-Robotics.pdf)
 ![LCD_keypad](Images/LCD_keypad_shield.png)
 
 ## Water level sensor
@@ -30,10 +30,8 @@ We need also to keep the spacing between the two contacts (nails). To solve that
 
 
 ### Corrosion protection
-The nails are made out of steel, which subject to corrosion. Electrolysis cignificantly helps causing the corrosion and in the sensor there is a direct current (DC) flowing on the surface. As a solution is the internal pullup resistor switched only when measuring is done. The process of corrosion is slowed down.
+The nails are made out of steel, which subject to corrosion. Electrolysis cignificantly helps causing the corrosion and in the sensor there is a direct current (DC) flowing on the surface. As a solution is the internal pullup resistor switched only when measuring is done. The process of corrosion is slowed down. 
 
-## Pump switching
-For the purpose of pump switching is made a modul with a relay. The relay can switches at 250 V and up to 10 A. In this project is used a DC pump powered by its own system.
-The molul of the relay on a desk has implemented current amplifying transistor.
-
-![relay](Images/relay.jpeg)
+## Water pump
+The water pump used in this project for pumping water into a flowerpot is made by COMET-pumpen. It is a submersible pump with 12 V DC input voltage.The maximum throughput is 10l/min and it can run up to 500 hours. For more dails see the [datasheet](Datasheet_comet-pumpen-elegant.pdf).
+![water_pump](Images/cerpadlo.jpg)
