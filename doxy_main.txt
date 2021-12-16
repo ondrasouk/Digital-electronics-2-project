@@ -4,7 +4,7 @@
  * @section data
  * @author      Pavel Vanek
  * @author      Ondrej Soukenik
- * @author      Zuzana Varmuzova
+ * @author      Zdenka Varmuzova
  * @author      Michaela Ryšava
  * 
  * @date    16.12.2021

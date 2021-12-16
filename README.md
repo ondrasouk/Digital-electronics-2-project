@@ -43,7 +43,7 @@ Link to this file in your GitHub repository:
         * [ ] Video presentation
 
 * done:
-    * Irrigation system. Water level - controlling sensor is placed in the tank and measures the water level (5 levels). Sensor for measuring soil moisture is placed in a soil and both send data to control logic, where are evaluated. If there is enough water in the tank and soil moisture is under specific value, water pump is activated. After certain time period another measuring is made.
+    * Irrigation system. Water level - controlling sensor is placed in the tank and measures the water level (5 levels). Sensor for measuring soil moisture is placed in a soil and both send data to control logic, where are evaluated. If there is enough water in the tank and soil moisture is under specific value, water pump is activated. After certain time period another measuring is made. User can choose from three modes of irrigation. More info about the system is in the [video](https://youtu.be/Qcah5Nm7IAs).
 
 <a name="hardware"></a>
 
@@ -51,9 +51,7 @@ Link to this file in your GitHub repository:
 
 The solution is designed on an Arduino Uno board with sensors and a water pump connected to external pins.
 
-### Overall cennection
-
-![scheme](Docs/HW/scheme.pdf)
+[Scheme of connection](Docs/HW/scheme.pdf)
 
 
 ### Arduino Uno board 
@@ -146,7 +144,7 @@ Write your text here.
 
 ## Video
 
-Write your text here
+[Link to video](https://youtu.be/Qcah5Nm7IAs)
 
 <a name="references"></a>
 
@@ -157,4 +155,3 @@ Write your text here
 3. LCD Keypad Shield [datasheet](Docs/Datasheet_DFR0009_D-Robotics.pdf)
 4. [Relay](Docs/Datasheet_SRD-12VDC-xx-x_ETC.pdf) used for pump switching
 5. Elegant submersible pump [datasheet](Docs/Datasheet_comet-pumpen-elegant.pdf)
-6. ...
