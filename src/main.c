@@ -327,8 +327,11 @@ void menu_line_print(const char *menu_entries[], uint8_t line)
 
 void display_menu(uint8_t key_press)
 {
-    display_update = 0;
-    if(key_press == 3){ // UP Key
+    item_uint8 menu_item = mode_menu_items[irrigation_mode][CURSOR_POS];
+    if(display_update > 2){
+        display_update = 1;
+    }
+    else if(key_press == 3){ // UP Key
         scroll_pos++;
         if((menu_pos < mode_menu_lenght[irrigation_mode]-2) & (scroll_pos == 2)){ // scroll up
             menu_pos++;
@@ -339,7 +342,7 @@ void display_menu(uint8_t key_press)
             scroll_pos--;
         }
     }
-    if(key_press == 4){ // DOWN Key
+    else if(key_press == 4){ // DOWN Key
         scroll_pos--;
         if((menu_pos > 0) & (scroll_pos == 255)){ // scroll down
             menu_pos--;
@@ -350,8 +353,7 @@ void display_menu(uint8_t key_press)
             scroll_pos++;
         }
     }
-    item_uint8 menu_item = mode_menu_items[irrigation_mode][CURSOR_POS];
-    if(key_press == 5){ // RIGHT Key
+    else if(key_press == 5){ // RIGHT Key
         if(menu_item.type >= ARRAY_SIZE(type_suffix)){
             cyclic_inc(menu_item.value, menu_item.limit_min, menu_item.limit_max);
         }
@@ -360,7 +362,7 @@ void display_menu(uint8_t key_press)
         }
         display_update = 2;
     }
-    if(key_press == 2){  // LEFT Key
+    else if(key_press == 2){  // LEFT Key
         if(menu_item.type >= ARRAY_SIZE(type_suffix)){
             cyclic_dec(&irrigation_mode, menu_item.limit_min, menu_item.limit_max);
         }
