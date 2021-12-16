@@ -15,8 +15,8 @@ Pro testování i provoz byla vyrobena asi 40cm dlouhá dřevěná lišta do kte
 
  Model v .stl formátu je dostupný ve složce 3D_models. Pokud se systém v provozu osvědčí, pro lepší životnost dřevěná lišta bude nahrazena PVC trubkou.
 
-![sonda_model](water_sensor_model.png)
-![sonda](water_sensor.jpeg)
+![sonda_model](Images/water_sensor_model.png)
+![sonda](Images/water_sensor.jpeg)
 
 
 ## Snímání vlhkosti půdy
@@ -24,16 +24,16 @@ Snímání vlhkosti půdy je řešeno rezistivní sondou. Sonda byla vytvořena 
 
 Odporová změna mezi sondami probíhá cca od 0-10kOhm/cm v závislosti na vlhkosti půdy. Druhý odpor děliče tvoří pro jednoduchost pullup rezistor v MCU. Ten má velikost od 30-50kOhm viz graf (zdroj researchgate.net/f).
 
-![graf](soil_resist.png)
+![graf](Images/soil_resist.png)
 
 Pro účely zalévání bohatě postačuje vytvoření linneární aproximace této závislosti(stejně se totiž používá zejména ta linearnější část). Programátor pouze v hlavičkovém souboru zadá dvě kalibrační hodnoty (pro 0% a pro 100% vlhkosti)
 
 Pro ukotvení sondy byl vytisknut přípravek zprostředkující vhodný odstup sond a kontakt k přívodům.
 
-![model2](hum_model.png)
+![model2](Images/hum_model.png)
 
 Níže je pohled na konstrukci sondy
-![humsens](hum_sensor.jpeg)
+![humsens](Images/hum_sensor.jpeg)
 
 ### Antikorozní ochrana
 Protože sondy (hřebíky)jsou z běžné oceli (jinak se používají nerezové trny), může docházek ke korozi. Elektrolýza velmi výrazně napománá ke vzniku koroze na povrchu vodičů jimiž proudí DC proud. Ke zpomalení vlivu koroze se tedy vnitřní pullup rezistor připíná pouze při měření.
@@ -42,4 +42,4 @@ Protože sondy (hřebíky)jsou z běžné oceli (jinak se používají nerezové
 Pro univerzálnost použitého čerpadla byl použit relátkový modul. Relé může spínat při 250V až 10A. V naší realizaci se počítá s DC čerpadlem, napájený vlastním systémem.
 
 Modul relé přímo na desce má implementovaný proudový posilovací tranzistor. Jeho připojení k vývojové desce Arduino je tak velmi snadné.
-![relay](relay.jpeg)
+![relay](Images/relay.jpeg)
