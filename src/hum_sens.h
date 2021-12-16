@@ -43,8 +43,8 @@ void hum_init(){
 /**
  * @ingroup hum
  * @brief  Function for main operation with humidity sensor
- * @detail Function read raw analog data from hum_sensor pin.
- * @detail Function also automaticaly turns off pullup resistor to prevent corosion of probec due electrolysis.
+ * @details Function read raw analog data from hum_sensor pin.
+ * @details Function also automaticaly turns off pullup resistor to prevent corosion of probec due electrolysis.
  * 
  * @return uint16_t readed ADC value (0-1024)
  */
@@ -82,7 +82,7 @@ uint16_t read_adc(){
 /**
  * @ingroup hum
  * @brief Function for transfering raw value to homidity in %
- * @detail function return coresponding humidity due to min_val and max_val
+ * @details function return coresponding humidity due to min_val and max_val
  *
  * @param val readed analog val from ADC
  * @return long 0-100% soil humidity
@@ -97,7 +97,7 @@ uint8_t to_percent(uint16_t val){
 /**
  * @ingroup hum
  * @brief  function for easy calling from main program
- * @detail Function read value from ADC and recalculate to percent
+ * @details Function read value from ADC and recalculate to percent
  * consist functions:- long to_percent(long val)
  *                   - uint16_t read_adc()
  * @return uint8_t 0-100% adecvate soil humidity level

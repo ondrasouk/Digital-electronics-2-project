@@ -38,6 +38,7 @@
 *************************************************************************/
  /**
   * @file uart.c
+  * @brief uart main file
   * @author Peter Fleury
   * @date 2015
   */

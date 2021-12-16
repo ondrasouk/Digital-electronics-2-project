@@ -25,7 +25,8 @@
 ************************************************************************/
 
 /**
- *  @file
+ *  @file uart.h
+ *  @brief Consist rutines to work uart
  *  @defgroup pfleury_uart UART Library <uart.h>
  *  @code #include <uart.h> @endcode
  *

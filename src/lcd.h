@@ -12,7 +12,8 @@
 
 /**
  * @ingroup lcd
- * @file
+ * @file lcd.h
+ * @brief Consist rutines for LCD display interaction
  * @defgroup pfleury_lcd LCD library <lcd.h>
  * @code #include <lcd.h> @endcode
  *

@@ -69,6 +69,7 @@
  */
  /**
   * @file rtc.c
+  * @brief rtc main file
   * @author Akafugu
   * @date 2011
   */ 

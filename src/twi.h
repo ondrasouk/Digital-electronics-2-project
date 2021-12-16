@@ -19,6 +19,8 @@
 
  /**
   * @file twi.h
+  * @brief Consist rutines to work with twi
+  * @details rct library uses these functions
   * @author Nicholas Zambetti
   * @date 2006
   */

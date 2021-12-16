@@ -16,6 +16,7 @@
  /**
   * @ingroup rtc
   * @file rtc.h
+  * @brief Consist rutines to work with RTC.
   * @author Akafugu Corporation
   * @date 2011
   */ 
@@ -53,7 +54,7 @@
   /**
    * @ingroup obj
    * @brief Structure of time variables
-   * @detail variables for seconds. minutes, hours, day in month, months, years, day in week and switch for 12/24 cycle
+   * @details variables for seconds. minutes, hours, day in month, months, years, day in week and switch for 12/24 cycle
    */ 
 struct tm {
 	int sec;      // 0 to 59
@@ -75,12 +76,12 @@ extern struct tm _tm;
 /**
  * @ingroup rtc
  * @brief Initialize the RTC and autodetect type (DS1307 or DS3231)
- * @detail Attempt autodetection:
+ * @details Attempt autodetection:
 	       1) Read and save temperature register
 	       2) Write a value to temperature register
 	       3) Read back the value
 	       equal to the one written: DS1307, write back saved value and return
- * @retusn 0 if communication is ok, 1 if fail
+ * @return 0 if communication is ok, 1 if fail
  */
 uint8_t rtc_init(void);
 /**
@@ -99,9 +100,9 @@ void rtc_set_ds3231(void);
 /**
  * @ingroup rtc
  * @brief Function to get time from RTC
- * @detail function supports both 24-hour and 12-hour mode
- * @detail read 7 bytes starting from register 0 (sec, min, hour, day-of-week, date, month, year)
- * @detail Clear clock halt bit from read data
+ * @details function supports both 24-hour and 12-hour mode
+ * @details read 7 bytes starting from register 0 (sec, min, hour, day-of-week, date, month, year)
+ * @details Clear clock halt bit from read data
  * @return structure tm filled with time variables
  */ 
 struct tm* rtc_get_time(void);
@@ -109,8 +110,8 @@ struct tm* rtc_get_time(void);
 /**
  * @ingroup rtc
  * @brief Function to get time from RTC
- * @detail function supports just 24-hour mode
- * @detail read just hours, minutes and seconds
+ * @details function supports just 24-hour mode
+ * @details read just hours, minutes and seconds
  * @param hour variable where to store red hour value
  * @param min variable where to store red minutes value
  * @param sec variable where to store red seconds value
@@ -120,8 +121,8 @@ void rtc_get_time_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
 /**
  * @ingroup rtc
  * @brief Function to set time to RTC
- * @detail function supports both 24-hour and 12-hour mode
- * @detail set 7 bytes starting from register 0 (sec, min, hour, day-of-week, date, month, year) 
+ * @details function supports both 24-hour and 12-hour mode
+ * @details set 7 bytes starting from register 0 (sec, min, hour, day-of-week, date, month, year) 
  * @param tm_ type tm, structure to store time values
  */ 
 void rtc_set_time(struct tm* tm_);
@@ -129,8 +130,8 @@ void rtc_set_time(struct tm* tm_);
 /**
  * @ingroup rtc
  * @brief Function to set time to RTC
- * @detail function supports just 12-hour mode
- * @detail set just hours, minutes and seconds 
+ * @details function supports just 12-hour mode
+ * @details set just hours, minutes and seconds 
  * @param hour variable where to find what should be written in rtc
  * @param min variable where find what should be written in rtc
  * @param sec variable where find what should be written in rtc
@@ -155,14 +156,14 @@ uint8_t rtc_is_clock_running(void);
 /**
  * @ingroup rtc
  * @brief function reads value of whole 56 bytes
- * @detail because it's impossible to read that much in one, function calls rtc_get_sram_byte and saves it in structure
+ * @details because it's impossible to read that much in one, function calls rtc_get_sram_byte and saves it in structure
  * @param data structure where to store red data
  */
 void rtc_get_sram(uint8_t* data);
 /**
  * @ingroup rtc
  * @brief function sets value of whole 56 bytes
- * @detail because it's impossible to read that much in one, function calls rtc_gset_sram_byte and sets it gradually
+ * @details because it's impossible to read that much in one, function calls rtc_gset_sram_byte and sets it gradually
  * @param data structure where to find data for setting
  */
 void rtc_set_sram(uint8_t *data);
@@ -218,16 +219,16 @@ void rtc_set_alarm(struct tm* tm_);
 /**
  * @ingroup rtc
  * @brief auxiliary function for rtc_set_alarm
- * @detail function call another functions and give them variable value and number of pin
+ * @details function call another functions and give them variable value and number of pin
  * @param hour variable from structure tm_
- * @parm min   variable from structure tm_
- * @parm sec   variable from structure tm_
+ * @param min   variable from structure tm_
+ * @param sec   variable from structure tm_
  */
 void rtc_set_alarm_s(uint8_t hour, uint8_t min, uint8_t sec);
 /**
  * @ingroup rtc
  * @brief  function for reading time from alarm
- * @detail function fall rtc_get_alarm_s to get time values and store it in tm structur
+ * @details function fall rtc_get_alarm_s to get time values and store it in tm structur
  */ 
 struct tm* rtc_get_alarm(void);
 /**
@@ -241,7 +242,7 @@ void rtc_get_alarm_s(uint8_t* hour, uint8_t* min, uint8_t* sec);
 /**
  * @ingroup rtc
  * @brief check alarm
- * @derail function reads values of rtc and when they match sets data, it returns true, else if returns false
+ * @derails function reads values of rtc and when they match sets data, it returns true, else if returns false
  * @return true when alarm finishes, false when alarm rums
  */ 
 bool rtc_check_alarm(void);  

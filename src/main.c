@@ -258,7 +258,7 @@ void pump_stop()
 /**
  * @ingroup pump
  * @brief Function for watering - smart mode
- * @detail 
+ * @details 
  */ 
 void smart_mode() 
 {
@@ -272,7 +272,7 @@ void smart_mode()
 /**
  * @ingroup pump
  * @brief Function for watering drip mode
- * @detail
+ * @details
  */
 void drip_mode() 
 {
@@ -286,7 +286,7 @@ void drip_mode()
 /**
  * @ingroup pump
  * @brief Function for watering constant mode
- * @detail
+ * @details
  */
 void const_mode()
 {
@@ -301,7 +301,7 @@ void const_mode()
 /**
  * @ingroup pump
  * @brief Function for switching between each modes
- * @detail
+ * @details
  */
 void watering_mode(uint8_t mode){
     switch (mode)
@@ -327,8 +327,8 @@ void watering_mode(uint8_t mode){
 /**
  * @ingroup lcd
  * @brief Function for cyclic increment of value
- * @detail If value is greater than max value, function sets min value
- * @detail Function is used for shifting menu
+ * @details If value is greater than max value, function sets min value
+ * @details Function is used for shifting menu
  * @param x pointer to x, line in nemu
  * @param lim_min minimum of range of x
  * @param lim_max maximum for range of x
@@ -344,8 +344,8 @@ void cyclic_inc(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
 /**
  * @ingroup lcd
  * @brief Function for cyclic decrement of value
- * @detail If value is smaller than min value, function sets max value
- * @detail Function is used for shifting menu
+ * @details If value is smaller than min value, function sets max value
+ * @details Function is used for shifting menu
  * @param x pointer to x, line in nemu
  * @param lim_min minimum of range of x
  * @param lim_max maximum for range of x
@@ -363,8 +363,8 @@ void cyclic_dec(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
 /**
  * @ingroup lcd
  * @brief Function for increment of value in certain range
- * @detail If value is greater than max value, function sets max value
- * @detail Function is used for shifting menu
+ * @details If value is greater than max value, function sets max value
+ * @details Function is used for shifting menu
  * @param x pointer to x, line in nemu
  * @param lim_min minimum of range of x
  * @param lim_max maximum for rangl of x
@@ -380,8 +380,8 @@ void limited_inc(uint8_t *x, const uint8_t lim, const uint8_t step)
 /**
  * @ingroup lcd
  * @brief Function for decrement of value in certain range
- * @detail If value is grater than min value, function sets min value
- * @detail Function is used for shifting menu
+ * @details If value is grater than min value, function sets min value
+ * @details Function is used for shifting menu
  * @param x pointer to x, line in nemu
  * @param lim_min minimum of range of x
  * @param lim_max maximum for range of x
@@ -410,8 +410,8 @@ void slice_str(const char *str, char *buffer, uint8_t start)
 /**
  * @ingroup lcd
  * @brief Function for editing format of number
- * @detail Function is used for displaying time
- * @detail 1 -> "01"; 25 -> "25"
+ * @details Function is used for displaying time
+ * @details 1 -> "01"; 25 -> "25"
  * @param x number with time value
  * @param str output edited time value
  */
@@ -490,8 +490,8 @@ void itoa_menu_item(int value, char *str, uint8_t type)
 /**
  * @ingroup lcd
  * @brief Timer 1 routine
- * @detail function checks sensors and update display
- * @detail if needed, function call watering process
+ * @details function checks sensors and update display
+ * @details if needed, function call watering process
  */ 
 void TIM1_routine() 
 {
@@ -524,7 +524,7 @@ void TIM1_routine()
 /**
  * @ingroup lcd
  * @brief Timer 2 routine
- * @detail server for shifting long text in line
+ * @details server for shifting long text in line
  */ 
 void TIM2_routine() 
 {
@@ -579,8 +579,8 @@ void menu_line_print(const char *menu_entries[], uint8_t line)
 /**
  * @ingroup lcd
  * @brief Function for displaying and scrolling in menu
- * @detail function display start position of menu and redisplay lines when key for scrolling is pressed
- * @detail when menu text is too long, it runs function for line scrolling
+ * @details function display start position of menu and redisplay lines when key for scrolling is pressed
+ * @details when menu text is too long, it runs function for line scrolling
  * @param key_press define direction for scrolling
  */ 
 void display_menu(uint8_t key_press)
@@ -639,10 +639,10 @@ void display_menu(uint8_t key_press)
 /**
  * @ingroup lcd
  * @brief function for displaying status
- * @detail "what's going on" function has 2 screen.
+ * @details "what's going on" function has 2 screen.
  * first: screen with soil humidity and water level
  * second: screen time and status of pump
- * @detail function looks for comment at update_display variable
+ * @details function looks for comment at update_display variable
  */ 
 void display_status() 
 {
@@ -708,7 +708,7 @@ void display_status()
 
 /**
  * @brief	Main function initialize all components, sets values for LCD display and provides infinite loop
- * @detail	infinite loop contain 2 timers, each timer has its own routine
+ * @details	infinite loop contain 2 timers, each timer has its own routine
  * @return	none
  */
 int main(void)
@@ -802,7 +802,7 @@ int main(void)
 /* Interrupt service routines ----------------------------------------*/
 /**
  * @brief	Timer/Counter1 overflow interrupt
- * @detail	Use single conversion mode and start.
+ * @details	Use single conversion mode and start.
  */
 ISR(TIMER1_OVF_vect)
 {
@@ -811,7 +811,7 @@ ISR(TIMER1_OVF_vect)
 }
 /**
  * @brief	Timer/Counter2 overflow interrupt
- * @detail	Use single conversion mode and start.
+ * @details	Use single conversion mode and start.
  */
 ISR(TIMER2_OVF_vect)
 {
@@ -824,7 +824,7 @@ ISR(TIMER2_OVF_vect)
 
 /**
  * @brief	ADC complete interrupt
- * @detail	Copy ADC value.
+ * @details	Copy ADC value.
  */
 ISR(ADC_vect) 
 {

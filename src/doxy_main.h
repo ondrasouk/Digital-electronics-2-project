@@ -1,19 +1,20 @@
 /**
  * @mainpage    Dokumentace
  * 
- * @section data
+ * @section Oveeall data
  * @author      Pavel Vanek
  * @author      Ondrej Soukenik
  * @author      Zuzana Varmuzova
- * @author      Michaela Ryšava
+ * @author      Michaela Rysava
  * 
  * @date    16.12.2021
  * 
+ * 
  * @section Project
  * @brief   Automatic Watering system is implemented on Arduino Uno Board. 
- * Main function is controling humidity of soil and controling of pump system when humidity level drops below 60%
- * Application includes sensor for measuring water level, RTC for time controla nd LCD display with move buttons
- * /
+ * @details Main function is controling humidity of soil and controling of pump system when humidity level drops below 60%
+ * @details Application includes sensor for measuring water level, RTC for time controla nd LCD display with move buttons
+ */
 /**
  * @defgroup hum    Humidity sensor
  * @brief    Functions for controling himidity sensor

@@ -45,7 +45,7 @@
 /**
  * @ingroupp water
  * @brief  Function for initialisation of water level sensors
- * @detail Function initialise GPIO for water-level sensors
+ * @details Function initialise GPIO for water-level sensors
  * all sensors are sat as INPUT with PULLUP resistor
  * 
  */
@@ -102,7 +102,7 @@ uint8_t read_level(void){
 /**
  * @ingroup water
  * @brief  Function for main comunication with water level sensor without error states
- * @detail Function read all watter-sensors and ignore error state
+ * @details Function read all watter-sensors and ignore error state
  * 
  * @return uint8_t adecvate water-level (0 to 5) (empty - full)
  */

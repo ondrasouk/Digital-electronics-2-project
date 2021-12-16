@@ -18,6 +18,7 @@
 */
  /**
   * @file twi.c
+  * @brief twi main file
   * @author Nicholas Zambetti
   * @date 2006
   */
