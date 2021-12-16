@@ -33,7 +33,7 @@
 #define MENU_TEXT_SHIFT_TIME_USEC 400000
 #define MENU_ITEM_SIZE_D 5
 #define TIM2_OVERFLOW_TIME 16384
-#define MENU_TIMEOUT_USEC 2000000
+#define MENU_TIMEOUT_USEC 10000000
 
 #define pump_pin PINB
 #define pump_port &PORTB
@@ -85,6 +85,11 @@ typedef struct {
     uint8_t *value;
 } item_uint8;
 
+/* Time --------------------------------------------------------------*/
+
+uint8_t time_hours = 0;
+uint8_t time_minutes = 0;
+uint8_t time_seconds = 0;
 
 /* Menu --------------------------------------------------------------*/
 
@@ -152,22 +157,37 @@ const item_uint8 const_menu_items[] = {
     {3, 0, 1, 255, &irrigation_wait_min},
 };
 
+const char *time_menu[] = {
+    "Irrigation mode:",
+    "Hours:",
+    "Minutes:",
+};
+
+const item_uint8 time_menu_items[] = {
+    {5, 0, 1, ARRAY_SIZE(menu_head_items)-1, &irrigation_mode},
+    {1, 0, 1, 23, &time_hours},
+    {1, 0, 1, 59, &time_minutes},
+};
+
 const char **mode_menu_pointers[] = {
     smart_menu,
     drip_menu,
     const_menu,
+    time_menu,
 }; // Add all menus to display
 
 const item_uint8 *mode_menu_items[] = {
     smart_menu_items,
     drip_menu_items,
     const_menu_items,
+    time_menu_items,
 };
 
 const uint8_t mode_menu_lenght[] = {
     ARRAY_SIZE(smart_menu),
     ARRAY_SIZE(drip_menu),
     ARRAY_SIZE(const_menu),
+    ARRAY_SIZE(time_menu),
 };
 
 const char **menu_character_values_pointers[] = {
@@ -199,14 +219,80 @@ uint16_t sens_humidity = 100;
 uint8_t sens_water_level = 100;
 uint8_t pump_state = 0; // 0 - off, 1 - running
 
-uint8_t time_hours = 0;
-uint8_t time_minutes = 0;
-uint8_t time_seconds = 0;
-
+/*--------------------------------------------------------------------*/
 /*--------------------------------------------------------------------*/
 /* Function definitions ----------------------------------------------*/
 /*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------*/
+/* Pump control Function definitions ---------------------------------*/
+/*--------------------------------------------------------------------*/
+
+void pump_start()
+{
+    *pump_port &= ~(1<<pump_gpio);
+    pump_state = 1;
+}
+
+void pump_stop()
+{
+    *pump_port |= (1<<pump_gpio);
+    pump_state = 0;
+}
+
+void smart_mode() 
+{
+    if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
+        pump_start();
+    }
+    else{
+        pump_stop();
+    }
+}
+
+void drip_mode() 
+{
+    if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
+        pump_start();
+    }
+    else{
+        pump_stop();
+    }
+}
+
+void const_mode()
+{
+    if((sens_humidity < (unsigned) (irrigation_level - irrigation_hysterezis / 2)) & (sens_water_level != 0)){
+        pump_start();
+    }
+    else{
+        pump_stop();
+    }
+}
+
+void watering_mode(uint8_t mode){
+    switch (mode)
+    {
+        case 0:
+            smart_mode();
+            break;
+        case 1:
+            drip_mode();
+            break;
+        case 2:
+            const_mode();
+            break;
+        default:
+            pump_stop();
+    }
+}
+
+/*--------------------------------------------------------------------*/
+/* Display Function definitions --------------------------------------*/
+/*--------------------------------------------------------------------*/
+
+// přidá jedna, pokud je vyšší než lim_max, tak se nastavá hodnota lim_min. Použito v menu pro přepínání textových hodnot.
 void cyclic_inc(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
 {
     uint8_t value = *x;
@@ -225,6 +311,7 @@ void cyclic_dec(uint8_t *x, const uint8_t lim_min, const uint8_t lim_max)
     }
 }
 
+// Zvětší o jedna, pokud je vyšší než limit, tak se nastaví limit. Použito v menu pro nastavené proměnných v menu.
 void limited_inc(uint8_t *x, const uint8_t lim, const uint8_t step)
 {
     uint8_t value = *x;
@@ -243,11 +330,13 @@ void limited_dec(uint8_t *x, const uint8_t lim, const uint8_t step)
     }
 }
 
+// ořezání stringu, použito pro efekt posouvání dlouhého textu.
 void slice_str(const char *str, char *buffer, uint8_t start)
 {
     strncpy(buffer, str + start, MENU_TEXT_SIZE_D - 1);
 }
 
+// 1 -> "01"; 25 -> "25", použito pro zobrazenní času.
 void itoa_with_starting_zero(uint8_t x, char *str) 
 {
     if(x < 10){
@@ -259,6 +348,7 @@ void itoa_with_starting_zero(uint8_t x, char *str)
     }
 }
 
+// Zobrazení času na displeji
 void display_time(uint8_t x, uint8_t y, uint8_t h, uint8_t m, uint8_t s) 
 {
     char str[] = "  ";
@@ -273,6 +363,7 @@ void display_time(uint8_t x, uint8_t y, uint8_t h, uint8_t m, uint8_t s)
     lcd_puts(str);
 }
 
+// speciální funkce pro nahrnutí do stringu. Kdy value je to co se má dát za hodnotu do str. type je typ ze struktury.
 void itoa_menu_item(int value, char *str, uint8_t type)
 {
     strncpy(str, "     ", MENU_ITEM_SIZE_D); // Clear output buffer
@@ -304,13 +395,15 @@ void itoa_menu_item(int value, char *str, uint8_t type)
     }
 }
 
+// Když bylo přerušení na TIMER1, tak to tady projde. Taky zavolá ovládání zalévání.
+
 void TIM1_routine() 
 {
     if(TIM1_flag){
         char str[] = "     ";
-        TIM1_flag = 0;
-        sens_humidity = read_hum();
-        sens_water_level = read_level();
+        TIM1_flag = 0; // reset the flag
+        sens_humidity = read_hum(); // read the humidity of soil
+        sens_water_level = read_level(); // read the water level
         uart_puts("\n\rSoil Humidity: ");
         itoa_menu_item(sens_humidity, str, 2);
         uart_puts(str);
@@ -328,9 +421,11 @@ void TIM1_routine()
             status_page = 0;
             display_update = 4;
         }
+        watering_mode(irrigation_mode);
     }
 }
 
+// tohle slouží jen pro posuv dlouhého textu na displeji.
 void TIM2_routine() 
 {
     if(scroll_pos_shift != 255){
@@ -355,6 +450,7 @@ void TIM2_routine()
     }
 }
 
+// vykreslení jednoho řádku menu. Vstup: menu_entries je to zvolené menu
 void menu_line_print(const char *menu_entries[], uint8_t line)
 {
     lcd_gotoxy(1,line);
@@ -375,13 +471,11 @@ void menu_line_print(const char *menu_entries[], uint8_t line)
     lcd_puts(value_disp);
 }
 
+// funkce pro pohyb v menu a volání menu_line_print. Také pouští efekt posuvu dlouhého textu.
 void display_menu(uint8_t key_press)
 {
     item_uint8 menu_item = mode_menu_items[irrigation_mode][CURSOR_POS];
-    if(display_update > 2){
-        display_update = 1;
-    }
-    else if(key_press == 3){ // UP Key
+    if(key_press == 3){ // UP Key
         scroll_pos++;
         if((menu_pos < mode_menu_lenght[irrigation_mode]-2) & (scroll_pos == 2)){ // scroll up
             menu_pos++;
@@ -431,6 +525,8 @@ void display_menu(uint8_t key_press)
     shift_buffer[MENU_TEXT_SIZE_D - 1] = 0x7e;
 }
 
+// display status. Two screens one screen with soil humidity and water level and on second screen time and status of pump.
+// Look for comment at update_display variable.
 void display_status() 
 {
     if(status_page == 0){
@@ -491,21 +587,6 @@ void display_status()
     }
 }
 
-/***********************************************************************
-logic function part
-***********************************************************************/
-
-void pump_start()
-{
-    *pump_port &= ~(1<<pump_gpio);
-    pump_state = 1;
-}
-
-void pump_stop()
-{
-    *pump_port |= (1<<pump_gpio);
-    pump_state = 0;
-}
 
 
 /**
@@ -525,12 +606,8 @@ int main(void)
     uart_init(UART_BAUD_SELECT(9600, F_CPU));
     //Initialize sensors
     level_sens_init();
-    hum_init();
     sei();
     rtc_init();
-    //variables for main program
-    char buf[32];
-
     // Initialize LCD display
     lcd_init(LCD_DISP_ON);
     // Upload custom characters
@@ -554,7 +631,9 @@ int main(void)
     pump_start(); // Test the rele
     _delay_ms(1000);
     pump_stop();
-    rtc_set_time_s(12, 15, 50);
+    if(rtc_is_clock_running() == 0){
+        rtc_set_time_s(12, 0, 0); // The clock is not running so set the time to default.
+    }
     // Configure ADC to convert PC0[A0] analog value
     // Set ADC reference to AVcc
     ADMUX |= (1 << REFS0);
@@ -571,32 +650,26 @@ int main(void)
     TIM2_overflow_16ms();
     TIM2_overflow_interrupt_enable();
     // Configure 16-bit Timer/Counter1 to start sensors readout
-    // Set prescaler to 4 s and enable overflow interrupt
+    // Set prescaler to 1 s and enable overflow interrupt
     TIM1_overflow_1s();
     TIM1_overflow_interrupt_enable();
     // Initialize sensors
     hum_init();
     level_sens_init();
-    
-    uint8_t key_press = 0;
-    display_menu(0);
+    uint8_t key_press = 0; // variable for storing key presses
+    display_menu(0); // Display menu before any user input
     // Infinite loop
     while (1) {
-        rtc_get_time_s(&time_hours, &time_minutes, &time_seconds);
-        sprintf(buf, "%d:%d:%d\n", time_hours, time_minutes, time_seconds);
-        uart_puts(buf);
-        uart_puts("---\n\r");
         TIM2_routine();
         TIM1_routine();
         key_press = key_press_detect(&ADC_key_value);
-        if (key_press) {
-            TIM2_display_timer = 0;
+        if (key_press) { // if key is pressed
+            TIM2_display_timer = 0; // reset inactivity timeout of menu
             char str[1] = "0";
             itoa(key_press, str, 10);
             uart_puts("\n\rKey pressed: ");
-            uart_puts(str);
-            display_menu(key_press);
-            TIM2_display_timer = 0;
+            uart_puts(str); // log to uart
+            display_menu(key_press); // show menu
         }
         if(TIM2_display_timer > MENU_TIMEOUT_NUM){
             scroll_pos_shift = 255; //stop text shift
@@ -604,7 +677,7 @@ int main(void)
             if(display_update < 3){
                 display_update = 4;
             }
-            display_status();
+            display_status(); // show screen
         }
     }
 
@@ -628,9 +701,10 @@ ISR(TIMER1_OVF_vect)
  */
 ISR(TIMER2_OVF_vect)
 {
-    // Start ADC conversion
+    // Signal to main
     TIM2_flag++;
     TIM2_display_timer++;
+    // Start ADC conversion
     ADCSRA |= (1 << ADSC);
 }
 
