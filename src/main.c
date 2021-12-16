@@ -27,17 +27,17 @@
 /* Definitions -------------------------------------------------------*/
 #define DISPLAY_ROWS 2
 #define MENU_TEXT_SIZE_D 10
-#define MENU_TEXT_SHIFT_TIME_USEC 150000
+#define MENU_TEXT_SHIFT_TIME_USEC 400000
 #define MENU_ITEM_SIZE_D 5
-#define TIM2_OVERFLOW_TIME 4096
-#define MENU_TIMEOUT_SECS 10
+#define TIM2_OVERFLOW_TIME 16384
+#define MENU_TIMEOUT_USEC 10000000
 
 #if !defined(ARRAY_SIZE)
     #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
 #define CURSOR_POS (menu_pos + scroll_pos)
 #define MENU_TEXT_SHIFT_NUM MENU_TEXT_SHIFT_TIME_USEC / TIM2_OVERFLOW_TIME
-#define MENU_TIMEOUT_NUM MENU_TIMEOUT_SECS * 100000 / TIM2_OVERFLOW_TIME
+#define MENU_TIMEOUT_NUM MENU_TIMEOUT_USEC / TIM2_OVERFLOW_TIME
 
 /*--------------------------------------------------------------------*/
 /* Globals -----------------------------------------------------------*/
